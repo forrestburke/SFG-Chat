@@ -180,7 +180,27 @@ function saveCurrentChat(){ localStorage.setItem("currentChat",JSON.stringify(cu
 
 // Chat history
 function saveChatToHistory(){ if(currentChat.length===0) return; let firstMsg = currentChat.find(m=>m.role==="user")?.text||"Chat"; currentChatName = firstMsg.length>20?firstMsg.slice(0,20)+"...":firstMsg; chatHistory.push({name: currentChatName,messages: currentChat}); localStorage.setItem("chatHistory",JSON.stringify(chatHistory)); renderHistory(); }
-function renderHistory(){ historyList.innerHTML=""; chatHistory.forEach((chat,index)=>{ const li = document.createElement("li"); li.textContent = chat.name; li.onclick = ()=>{ currentChat = chat.messages; currentChatName = chat.name; chatDiv.innerHTML=""; currentChat.forEach(m=>addMsg(m.role,m.text,m.meta,m.isImage,m.imgUrl)); }; li.ondblclick = ()=>{ const newName = prompt("Rename chat:",chat.name); if(newName) { chatHistory[index].name = newName; localStorage.setItem("chatHistory",JSON.stringify(chatHistory)); renderHistory(); } }; historyList.appendChild(li); }); }
+function renderHistory(){
+  historyList.innerHTML="";
+  chatHistory.forEach((chat,index)=>{
+    const li=document.createElement("li");
+    li.textContent=chat.name;
+
+    li.onclick=()=>{
+      currentChat=chat.messages; currentChatName=chat.name; chatDiv.innerHTML="";
+      currentChat.forEach(m=>addMsg(m.role,m.text,m.meta,m.isImage,m.imgUrl));
+
+      // Auto-collapse sidebar on mobile
+      if(window.innerWidth <= 768){ sidebar.classList.remove("show"); }
+    };
+
+    li.ondblclick=()=>{
+      const newName=prompt("Rename chat:",chat.name);
+      if(newName){ chatHistory[index].name=newName; localStorage.setItem("chatHistory",JSON.stringify(chatHistory)); renderHistory(); }
+    };
+    historyList.appendChild(li);
+  });
+}
 function newChat(){ if(currentChat.length>0) saveChatToHistory(); chatDiv.innerHTML=""; currentChat=[]; currentChatName=""; }
 
 // Send GPT message
