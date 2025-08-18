@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Giants GPT&lt;/title&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Giants favicon + Home Screen icon --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/en/3/30/San_Francisco_Giants_Logo.svg"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/en/3/30/San_Francisco_Giants_Logo.svg"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>body { font-family: Arial, sans-serif; margin: 20px; background-color: #F5F5F5; color: #333; transition: background 0.3s, color 0.3s; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.dark { background-color: #000; color: #FFF; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>h2 { color: #FD5A1E; text-align: center; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#chat { max-height: 65vh; overflow-y: auto; margin-bottom: 15px; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.message { margin: 10px 0; padding: 10px 15px; border-radius: 18px; max-width: 80%; line-height: 1.4; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.user { background:#FD5A1E; color:#fff; margin-left:auto; text-align:right; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.assistant { background:#ffffff; color:#333; margin-right:auto; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.dark .assistant { background:#222; color:#EEE; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.meta { font-size: 10px; color: #666; margin-top: 4px; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>textarea, input, select { width:100%; padding: 8px; margin-top: 5px; border-radius: 6px; border:1px solid #ccc; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>button { background-color:#FD5A1E; color:#fff; border:none; border-radius:6px; padding:8px 12px; margin-top:10px; cursor:pointer;}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>button:hover { background-color:#e04f1a; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#typing { color:#999; font-size: 12px; font-style: italic; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;h2&gt;⚾ Giants GPT Chat&lt;/h2&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;label&gt;API Key:</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input type="password" id="apiKey" placeholder="Enter your OpenAI key"&gt;</p>
+<p class="p1">&lt;/label&gt;</p>
+<p class="p1">&lt;button onclick="clearKey()"&gt;Clear API Key&lt;/button&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;label&gt;Model:</p>
+<p class="p1">&lt;select id="modelSelect"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;option value="gpt-3.5-turbo"&gt;gpt-3.5-turbo&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;option value="gpt-4o-mini"&gt;gpt-4o-mini&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;option value="gpt-4o"&gt;gpt-4o&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;option value="gpt-5"&gt;gpt-5&lt;/option&gt;</p>
+<p class="p1">&lt;/select&gt;</p>
+<p class="p1">&lt;/label&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;input type="checkbox" id="darkToggle"&gt; Dark Mode</p>
+<p class="p1">&lt;/label&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;div id="chat"&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;div id="typing" style="display:none;"&gt;GPT is typing...&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;textarea id="userInput" placeholder="Type your message..."&gt;&lt;/textarea&gt;</p>
+<p class="p1">&lt;button onclick="sendMessage()"&gt;Send&lt;/button&gt;</p>
+<p class="p1">&lt;button onclick="clearChat()"&gt;Clear Chat&lt;/button&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1">const apiKeyInput = document.getElementById("apiKey");</p>
+<p class="p1">const modelSelect = document.getElementById("modelSelect");</p>
+<p class="p1">const chatDiv = document.getElementById("chat");</p>
+<p class="p1">const userInput = document.getElementById("userInput");</p>
+<p class="p1">const typingDiv = document.getElementById("typing");</p>
+<p class="p1">const darkToggle = document.getElementById("darkToggle");</p>
+<p class="p1">const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o-mini':0.0015, 'gpt-4o':0.003, 'gpt-5':0.005 };</p>
+<p class="p2"><br></p>
+<p class="p1">function loadSaved(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>apiKeyInput.value = localStorage.getItem("apiKey") || "";</p>
+<p class="p1"><span class="Apple-converted-space">  </span>modelSelect.value = localStorage.getItem("model") || "gpt-4o-mini";</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(localStorage.getItem("dark") === "true") {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>darkToggle.checked = true;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>document.body.classList.add("dark");</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">}</p>
+<p class="p1">loadSaved();</p>
+<p class="p2"><br></p>
+<p class="p1">apiKeyInput.onchange = ()=&gt; localStorage.setItem("apiKey", apiKeyInput.value);</p>
+<p class="p1">modelSelect.onchange = ()=&gt; localStorage.setItem("model", modelSelect.value);</p>
+<p class="p1">darkToggle.onchange = ()=&gt;{</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(darkToggle.checked){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>document.body.classList.add("dark");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>localStorage.setItem("dark","true");</p>
+<p class="p1"><span class="Apple-converted-space">  </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>document.body.classList.remove("dark");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>localStorage.setItem("dark","false");</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">};</p>
+<p class="p2"><br></p>
+<p class="p1">function addMsg(role,text,meta=""){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const div = document.createElement("div");</p>
+<p class="p1"><span class="Apple-converted-space">  </span>div.className = "message " + (role==="user"?"user":"assistant");</p>
+<p class="p1"><span class="Apple-converted-space">  </span>div.innerHTML = text.replace(/\n/g,"&lt;br&gt;");</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(meta){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const span=document.createElement("div");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>span.className="meta"; span.textContent=meta;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>div.appendChild(span);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>chatDiv.appendChild(div);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>chatDiv.scrollTop = chatDiv.scrollHeight;</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">async function sendMessage(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const key=apiKeyInput.value.trim();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const content=userInput.value.trim();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const model=modelSelect.value;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(!key||!content) return;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>addMsg("user",content);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>userInput.value="";</p>
+<p class="p1"><span class="Apple-converted-space">  </span>typingDiv.style.display = "block";</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>try{</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const res=await fetch("https://api.openai.com/v1/chat/completions",{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>method:"POST",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+key },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>body: JSON.stringify({ model, messages:[{role:"user", content}]})</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const data=await res.json();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>typingDiv.style.display = "none";</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const reply=data.choices[0].message.content;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const tok = data.usage.total_tokens;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const cost = (tok/1000 * costPerThousandTokens[model]).toFixed(5);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>addMsg("assistant",reply,`Tokens: ${tok} | Cost: $${cost}`);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}catch(err){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>typingDiv.style.display = "none";</p>
+<p class="p1"><span class="Apple-converted-space">    </span>addMsg("assistant","Error: "+err.message);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function clearChat(){ chatDiv.innerHTML=""; }</p>
+<p class="p1">function clearKey(){</p>
+<p class="p1"><span class="Apple-converted-space">  </span>if(confirm("Remove saved API key?")){</p>
+<p class="p1"><span class="Apple-converted-space">    </span>localStorage.removeItem("apiKey");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>apiKeyInput.value="";</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">}</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
