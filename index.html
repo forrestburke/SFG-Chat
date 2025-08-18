@@ -4,27 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Giants GPT</title>
+
+<!-- Favicon & iOS Home Screen -->
 <link rel="icon" href="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png" type="image/png">
+<link rel="apple-touch-icon" href="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Giants GPT">
 
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f5f5f5; color:#333; transition: all 0.3s;}
 .dark { background:#121212; color:#eee; }
-header { padding:12px 20px; background:#FD5A1E; color:#fff; font-size:20px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); position: sticky; top:0; z-index:1003; }
 
-#sidebarToggle { display:none; position:fixed; top:12px; left:12px; background:#FD5A1E; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; z-index:1004; }
+header { padding:12px 20px; background:#000; color:#fff; font-size:20px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); position: sticky; top:0; z-index:1003; }
 
-#container { display:flex; height:calc(100vh - 52px); transition: all 0.3s; }
-#sidebar { width:70vw; max-width:250px; min-width:200px; background:#fff; border-right:1px solid #ddd; overflow-y:auto; transition: transform 0.3s ease; top:52px; height:calc(100vh - 52px); z-index:1002; position:fixed; transform: translateX(-260px);}
-#sidebar.dark { background:#1f1f1f; border-color:#333; }
-#sidebar h3 { padding:12px 10px; font-size:16px; color:#FD5A1E; }
-#sidebar button { margin:5px 10px; padding:6px 10px; border:none; border-radius:6px; background:#FD5A1E; color:#fff; cursor:pointer; transition:0.2s; }
-#sidebar button:hover { background:#e04f1a; }
-#historyList { list-style:none; padding:0 10px; }
-#historyList li { padding:8px 6px; border-radius:6px; margin-bottom:5px; background:#eee; cursor:pointer; transition:0.2s; }
-#historyList li:hover { background:#FD5A1E; color:#fff; }
-
-#main { flex:1; display:flex; flex-direction:column; padding:10px; margin-left:0; margin-top:52px; height:calc(100vh - 52px); }
+#container { display:flex; flex-direction:column; height:calc(100vh - 52px); padding:10px; }
 #chat { flex:1; overflow-y:auto; padding:10px; border-radius:12px; border:1px solid #ccc; background:#fafafa; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
 .dark #chat { background:#1e1e1e; border-color:#333; }
 
@@ -39,74 +33,72 @@ button.action { background:#FD5A1E; color:#fff; border:none; border-radius:8px; 
 button.action:hover { background:#e04f1a; }
 
 img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer; border:2px solid #FD5A1E; border-radius:6px; }
-#modalOverlay { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:999; }
+#modalOverlay, #historyModal { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); justify-content:center; align-items:flex-start; padding-top:60px; z-index:999; }
 #modalOverlay img { max-width:90vw; max-height:90vh; border-radius:8px; }
+#historyModalContent { background:#fff; border-radius:12px; padding:20px; max-width:400px; width:90%; max-height:80vh; overflow-y:auto; }
+#historyModalContent.dark { background:#1e1e1e; color:#eee; }
+#historyModalContent h3 { margin-bottom:10px; color:#FD5A1E; }
 
 @media(max-width:768px){
-  #sidebarToggle { display:block; }
-  #sidebar.show { transform:translateX(0); }
-  #main { margin-left:0; }
   button.action { width:48%; }
   button.action + button.action { margin-left:4%; }
-}
-
-@media(min-width:769px){
-  #main { margin-left:250px; }
 }
 </style>
 </head>
 <body>
-<header>⚾ Giants GPT</header>
-<button id="sidebarToggle">☰</button>
+<header>
+  ⚾ Giants GPT
+  <button style="position:absolute;right:10px;top:12px;" onclick="openHistory()">History</button>
+</header>
 
 <div id="container">
-  <div id="sidebar">
-    <h3>Chats</h3>
-    <button onclick="newChat()">New Chat</button>
-    <ul id="historyList"></ul>
-  </div>
+  <label>API Key:
+    <input type="password" id="apiKey" placeholder="Enter your OpenAI key">
+  </label>
+  <button onclick="clearKey()">Clear API Key</button>
 
-  <div id="main">
-    <label>API Key:
-      <input type="password" id="apiKey" placeholder="Enter your OpenAI key">
-    </label>
-    <button onclick="clearKey()">Clear API Key</button>
+  <label>Model:
+    <select id="modelSelect">
+      <option value="gpt-5">GPT-5 (Recommended)</option>
+      <option value="gpt-4o">GPT-4o</option>
+      <option value="gpt-4o-mini">GPT-4o-mini</option>
+      <option value="gpt-3.5-turbo">GPT-3.5-turbo</option>
+    </select>
+  </label>
 
-    <label>Model:
-      <select id="modelSelect">
-        <option value="gpt-5">GPT-5 (Recommended)</option>
-        <option value="gpt-4o">GPT-4o</option>
-        <option value="gpt-4o-mini">GPT-4o-mini</option>
-        <option value="gpt-3.5-turbo">GPT-3.5-turbo</option>
-      </select>
-    </label>
+  <label>Image Size:
+    <select id="imageSizeSelect">
+      <option value="256x256">256x256</option>
+      <option value="512x512" selected>512x512</option>
+      <option value="1024x1024">1024x1024</option>
+    </select>
+  </label>
 
-    <label>Image Size:
-      <select id="imageSizeSelect">
-        <option value="256x256">256x256</option>
-        <option value="512x512" selected>512x512</option>
-        <option value="1024x1024">1024x1024</option>
-      </select>
-    </label>
+  <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
 
-    <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
+  <label>Upload Document (TXT):
+    <input type="file" id="fileInput" accept=".txt">
+  </label>
 
-    <label>Upload Document (TXT):
-      <input type="file" id="fileInput" accept=".txt">
-    </label>
+  <div id="chat"></div>
+  <div id="typing" style="display:none;">GPT is typing...</div>
 
-    <div id="chat"></div>
-    <div id="typing" style="display:none;">GPT is typing...</div>
-
-    <textarea id="userInput" placeholder="Type your message..."></textarea>
-    <div style="display:flex; gap:10px;">
-      <button class="action" id="sendButton">Send</button>
-      <button class="action" id="generateButton">Generate Image</button>
-    </div>
+  <textarea id="userInput" placeholder="Type your message..."></textarea>
+  <div style="display:flex; gap:10px;">
+    <button class="action" id="sendButton">Send</button>
+    <button class="action" id="generateButton">Generate Image</button>
   </div>
 </div>
 
 <div id="modalOverlay" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
+
+<div id="historyModal" onclick="this.style.display='none'">
+  <div id="historyModalContent" onclick="event.stopPropagation()">
+    <h3>Previous Chats</h3>
+    <ul id="historyList"></ul>
+    <button onclick="newChat()">New Chat</button>
+  </div>
+</div>
 
 <script>
 // Elements
@@ -120,11 +112,10 @@ const historyList = document.getElementById("historyList");
 const modalOverlay = document.getElementById("modalOverlay");
 const modalImg = document.getElementById("modalImg");
 const fileInput = document.getElementById("fileInput");
-const sidebar = document.getElementById("sidebar");
-const sidebarToggle = document.getElementById("sidebarToggle");
 const imageSizeSelect = document.getElementById("imageSizeSelect");
 const sendButton = document.getElementById("sendButton");
 const generateButton = document.getElementById("generateButton");
+const historyModal = document.getElementById("historyModal");
 
 const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o-mini':0.0015, 'gpt-4o':0.003, 'gpt-5':0.005 };
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
@@ -133,13 +124,10 @@ let currentChatName = "";
 
 // Settings
 function saveSettings(){ localStorage.setItem("apiKey", apiKeyInput.value); localStorage.setItem("model", modelSelect.value); localStorage.setItem("dark", darkToggle.checked?"true":"false"); }
-function loadSettings(){ apiKeyInput.value = localStorage.getItem("apiKey")||""; modelSelect.value = localStorage.getItem("model")||"gpt-5"; if(localStorage.getItem("dark")==="true"){ darkToggle.checked=true; document.body.classList.add("dark"); } renderHistory(); }
+function loadSettings(){ apiKeyInput.value = localStorage.getItem("apiKey")||""; modelSelect.value = localStorage.getItem("model")||"gpt-5"; if(localStorage.getItem("dark")==="true"){ darkToggle.checked=true; document.body.classList.add("dark"); document.getElementById('historyModalContent').classList.add('dark'); } renderHistory(); }
 loadSettings();
 apiKeyInput.onchange = saveSettings; modelSelect.onchange = saveSettings;
-darkToggle.onchange = ()=>{ document.body.classList.toggle("dark"); saveSettings(); };
-
-// Sidebar toggle for mobile
-sidebarToggle.onclick = ()=>{ sidebar.classList.toggle("show"); };
+darkToggle.onchange = ()=>{ document.body.classList.toggle("dark"); document.getElementById('historyModalContent').classList.toggle('dark'); saveSettings(); };
 
 // File upload
 fileInput.addEventListener("change", (event)=>{
@@ -153,7 +141,7 @@ fileInput.addEventListener("change", (event)=>{
   reader.readAsText(file);
 });
 
-// Add messages
+// Messages
 function addMsg(role,text,meta="",isImage=false,imgUrl=""){
   const div = document.createElement("div");
   div.className = "message "+(role==="user"?"user":"assistant");
@@ -176,7 +164,7 @@ function renderHistory(){
     li.onclick=()=>{
       currentChat=chat.messages; currentChatName=chat.name; chatDiv.innerHTML="";
       currentChat.forEach(m=>addMsg(m.role,m.text,m.meta,m.isImage,m.imgUrl));
-      if(window.innerWidth <= 768){ sidebar.classList.remove("show"); }
+      historyModal.style.display='none';
     };
 
     li.ondblclick=()=>{
@@ -188,7 +176,10 @@ function renderHistory(){
 }
 function newChat(){ if(currentChat.length>0) saveChatToHistory(); chatDiv.innerHTML=""; currentChat=[]; currentChatName=""; }
 
-// Send GPT message
+// History modal
+function openHistory(){ historyModal.style.display='flex'; }
+
+// GPT API
 async function sendMessage(){
   const key = apiKeyInput.value.trim(); const content = userInput.value.trim(); const model = modelSelect.value; if(!key||!content) return;
   addMsg("user",content); userInput.value=""; typingDiv.style.display="block";
@@ -201,7 +192,7 @@ async function sendMessage(){
   } catch(err){ typingDiv.style.display="none"; addMsg("assistant","Error: "+err.message); }
 }
 
-// Generate image
+// Image generation
 async function generateImage() {
   const key = apiKeyInput.value.trim(); const prompt = userInput.value.trim(); const size = imageSizeSelect.value; if (!key || !prompt) return;
   addMsg("user", prompt); userInput.value = ""; typingDiv.style.display = "block";
@@ -221,10 +212,7 @@ async function generateImage() {
 // Buttons
 sendButton.onclick = ()=>sendMessage();
 generateButton.onclick = ()=>generateImage();
-
-// Send on Enter
 userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendButton.click(); }});
-
 function clearKey(){ apiKeyInput.value=""; saveSettings(); }
 </script>
 </body>
