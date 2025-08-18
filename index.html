@@ -112,6 +112,12 @@ async function sendMessage(){
     });
     const data=await res.json();
     typingDiv.style.display = "none";
+
+    if(data.error){
+      addMsg("assistant","Error: "+data.error.message);
+      return;
+    }
+
     const reply=data.choices[0].message.content;
     const tok = data.usage.total_tokens;
     const cost = (tok/1000 * costPerThousandTokens[model]).toFixed(5);
@@ -139,6 +145,17 @@ async function generateImage(){
     });
     const data=await res.json();
     typingDiv.style.display = "none";
+
+    if(data.error){
+      addMsg("assistant","Error: "+data.error.message);
+      return;
+    }
+    if(!data.data || !data.data[0] || !data.data[0].url){
+      addMsg("assistant","Error: Unexpected response from OpenAI Images API.");
+      console.error(data);
+      return;
+    }
+
     const imgUrl = data.data[0].url;
     const div = document.createElement("div");
     div.className="message assistant";
@@ -147,6 +164,7 @@ async function generateImage(){
     div.appendChild(img);
     chatDiv.appendChild(div);
     chatDiv.scrollTop = chatDiv.scrollHeight;
+
   }catch(err){
     typingDiv.style.display = "none";
     addMsg("assistant","Error: "+err.message);
