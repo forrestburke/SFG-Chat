@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Giants GPT</title>
 
-<!-- Giants favicon + Home Screen icon -->
 <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/en/3/30/San_Francisco_Giants_Logo.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/en/3/30/San_Francisco_Giants_Logo.svg">
 
@@ -13,7 +12,7 @@
 body { font-family: Arial, sans-serif; margin: 20px; background-color: #F5F5F5; color: #333; transition: background 0.3s, color 0.3s; }
 .dark { background-color: #000; color: #FFF; }
 h2 { color: #FD5A1E; text-align: center; }
-#chat { max-height: 60vh; overflow-y: auto; margin-bottom: 15px; }
+#chat { max-height: 50vh; overflow-y: auto; margin-bottom: 15px; border:1px solid #ccc; padding:10px; border-radius:8px; }
 .message { margin: 10px 0; padding: 10px 15px; border-radius: 18px; max-width: 80%; line-height: 1.4; word-wrap: break-word; }
 .user { background:#FD5A1E; color:#fff; margin-left:auto; text-align:right; }
 .assistant { background:#ffffff; color:#333; margin-right:auto; }
@@ -23,7 +22,13 @@ textarea, input, select { width:100%; padding: 8px; margin-top: 5px; border-radi
 button { background-color:#FD5A1E; color:#fff; border:none; border-radius:6px; padding:8px 12px; margin-top:10px; cursor:pointer;}
 button:hover { background-color:#e04f1a; }
 #typing { color:#999; font-size: 12px; font-style: italic; }
-img.generated { max-width: 100%; margin-top: 10px; border-radius: 8px; }
+img.generated { max-width: 100%; margin-top: 10px; border-radius: 8px; cursor:pointer; }
+img.thumb { width: 100px; height: auto; margin: 5px; cursor:pointer; border: 2px solid #FD5A1E; border-radius: 6px; }
+#historyPanel { max-height: 150px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px; border-radius:6px; }
+#historyPanel div { cursor:pointer; margin-bottom:4px; padding:2px 4px; border-radius:4px; background:#f0f0f0; }
+#historyPanel div:hover { background:#FD5A1E; color:#fff; }
+#modalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:999; }
+#modalOverlay img { max-width:90%; max-height:90%; border-radius:8px; }
 </style>
 </head>
 <body>
@@ -48,6 +53,7 @@ img.generated { max-width: 100%; margin-top: 10px; border-radius: 8px; }
   <input type="checkbox" id="darkToggle"> Dark Mode
 </label>
 
+<div id="historyPanel"></div>
 <div id="chat"></div>
 <div id="typing" style="display:none;">GPT is typing...</div>
 
@@ -55,8 +61,10 @@ img.generated { max-width: 100%; margin-top: 10px; border-radius: 8px; }
 <div style="margin-top:10px;">
   <button onclick="sendMessage()">Send</button>
   <button onclick="generateImage()">Generate Image</button>
-  <button onclick="clearChat()">Clear Chat</button>
+  <button onclick="clearChat()">New Chat</button>
 </div>
+
+<div id="modalOverlay" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
 
 <script>
 const apiKeyInput = document.getElementById("apiKey");
@@ -65,12 +73,19 @@ const chatDiv = document.getElementById("chat");
 const userInput = document.getElementById("userInput");
 const typingDiv = document.getElementById("typing");
 const darkToggle = document.getElementById("darkToggle");
+const historyPanel = document.getElementById("historyPanel");
+const modalOverlay = document.getElementById("modalOverlay");
+const modalImg = document.getElementById("modalImg");
 const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o-mini':0.0015, 'gpt-4o':0.003, 'gpt-5':0.005 };
+
+let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
+let currentChat = [];
 
 function loadSaved(){
   apiKeyInput.value = localStorage.getItem("apiKey") || "";
   modelSelect.value = localStorage.getItem("model") || "gpt-4o-mini";
   if(localStorage.getItem("dark") === "true") { darkToggle.checked = true; document.body.classList.add("dark"); }
+  renderHistoryPanel();
 }
 loadSaved();
 
@@ -81,10 +96,18 @@ darkToggle.onchange = ()=>{
   else{ document.body.classList.remove("dark"); localStorage.setItem("dark","false"); }
 };
 
-function addMsg(role,text,meta=""){
+function addMsg(role,text,meta="",isImage=false,imgUrl=""){
   const div = document.createElement("div");
   div.className = "message " + (role==="user"?"user":"assistant");
-  div.innerHTML = text.replace(/\n/g,"<br>");
+  if(isImage){
+    const img = document.createElement("img");
+    img.src = imgUrl;
+    img.className = "thumb";
+    img.onclick = ()=> { modalImg.src = imgUrl; modalOverlay.style.display="flex"; };
+    div.appendChild(img);
+  } else {
+    div.innerHTML = text.replace(/\n/g,"<br>");
+  }
   if(meta){
     const span=document.createElement("div");
     span.className="meta"; span.textContent=meta;
@@ -92,6 +115,36 @@ function addMsg(role,text,meta=""){
   }
   chatDiv.appendChild(div);
   chatDiv.scrollTop = chatDiv.scrollHeight;
+
+  // Save to current chat
+  currentChat.push({role,text,meta,isImage,imgUrl});
+  saveCurrentChat();
+}
+
+function saveCurrentChat(){
+  localStorage.setItem("currentChat", JSON.stringify(currentChat));
+}
+
+function saveChatToHistory(){
+  chatHistory.push(currentChat);
+  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+  renderHistoryPanel();
+}
+
+function renderHistoryPanel(){
+  historyPanel.innerHTML = "";
+  chatHistory.forEach((chat,index)=>{
+    const div = document.createElement("div");
+    div.textContent = `Chat #${index+1}`;
+    div.onclick = ()=>{
+      currentChat = chat;
+      chatDiv.innerHTML = "";
+      chat.forEach(m=>{
+        addMsg(m.role,m.text,m.meta,m.isImage,m.imgUrl);
+      });
+    };
+    historyPanel.appendChild(div);
+  });
 }
 
 async function sendMessage(){
@@ -157,13 +210,7 @@ async function generateImage(){
     }
 
     const imgUrl = data.data[0].url;
-    const div = document.createElement("div");
-    div.className="message assistant";
-    const img = document.createElement("img");
-    img.src=imgUrl; img.className="generated";
-    div.appendChild(img);
-    chatDiv.appendChild(div);
-    chatDiv.scrollTop = chatDiv.scrollHeight;
+    addMsg("assistant","", "", true, imgUrl);
 
   }catch(err){
     typingDiv.style.display = "none";
@@ -171,10 +218,17 @@ async function generateImage(){
   }
 }
 
-function clearChat(){ chatDiv.innerHTML=""; }
+function clearChat(){
+  if(confirm("Start a new chat? Current chat will be saved to history.")){
+    saveChatToHistory();
+    chatDiv.innerHTML="";
+    currentChat=[];
+    saveCurrentChat();
+  }
+}
+
 function clearKey(){ if(confirm("Remove saved API key?")){ localStorage.removeItem("apiKey"); apiKeyInput.value=""; } }
 
-// Send on Enter/Return
 userInput.addEventListener("keydown", function(e){
   if(e.key==="Enter" && !e.shiftKey){
     e.preventDefault();
