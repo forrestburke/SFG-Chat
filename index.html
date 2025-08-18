@@ -72,13 +72,6 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
     </label>
     <button onclick="clearKey()">Clear API Key</button>
 
-    <label>Mode:
-      <select id="actionMode">
-        <option value="text">Text Chat</option>
-        <option value="image">Generate Image</option>
-      </select>
-    </label>
-
     <label>Model:
       <select id="modelSelect">
         <option value="gpt-5">GPT-5 (Recommended)</option>
@@ -106,7 +99,10 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
     <div id="typing" style="display:none;">GPT is typing...</div>
 
     <textarea id="userInput" placeholder="Type your message..."></textarea>
-    <button class="action" id="actionButton">Send / Generate</button>
+    <div style="display:flex; gap:10px;">
+      <button class="action" id="sendButton">Send</button>
+      <button class="action" id="generateButton">Generate Image</button>
+    </div>
   </div>
 </div>
 
@@ -115,7 +111,6 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
 <script>
 // Elements
 const apiKeyInput = document.getElementById("apiKey");
-const actionMode = document.getElementById("actionMode");
 const modelSelect = document.getElementById("modelSelect");
 const chatDiv = document.getElementById("chat");
 const userInput = document.getElementById("userInput");
@@ -128,7 +123,8 @@ const fileInput = document.getElementById("fileInput");
 const sidebar = document.getElementById("sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
 const imageSizeSelect = document.getElementById("imageSizeSelect");
-const actionButton = document.getElementById("actionButton");
+const sendButton = document.getElementById("sendButton");
+const generateButton = document.getElementById("generateButton");
 
 const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o-mini':0.0015, 'gpt-4o':0.003, 'gpt-5':0.005 };
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
@@ -144,19 +140,6 @@ darkToggle.onchange = ()=>{ document.body.classList.toggle("dark"); saveSettings
 
 // Sidebar toggle for mobile
 sidebarToggle.onclick = ()=>{ sidebar.classList.toggle("show"); };
-
-// Swipeable sidebar for mobile
-let startX = 0;
-let currentX = 0;
-let isDragging = false;
-document.addEventListener("touchstart", e=>{ startX = e.touches[0].clientX; });
-document.addEventListener("touchmove", e=>{
-  currentX = e.touches[0].clientX;
-  let dx = currentX - startX;
-  if(dx>50){ sidebar.classList.add("show"); }
-  if(dx<-50){ sidebar.classList.remove("show"); }
-});
-document.addEventListener("touchend", e=>{ startX=0; currentX=0; isDragging=false; });
 
 // File upload
 fileInput.addEventListener("change", (event)=>{
@@ -235,11 +218,12 @@ async function generateImage() {
   } catch(err){ typingDiv.style.display="none"; addMsg("assistant","Error: "+err.message); }
 }
 
-// Unified action button
-actionButton.onclick = ()=>{ if(actionMode.value==="text"){ sendMessage(); } else { generateImage(); } };
+// Buttons
+sendButton.onclick = ()=>sendMessage();
+generateButton.onclick = ()=>generateImage();
 
-// Send message on Enter
-userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); actionButton.click(); }});
+// Send on Enter
+userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendButton.click(); }});
 
 function clearKey(){ apiKeyInput.value=""; saveSettings(); }
 </script>
