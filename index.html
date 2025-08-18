@@ -5,33 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Giants GPT</title>
 <link rel="icon" href="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png" type="image/png">
-<link rel="apple-touch-icon" href="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png">
 
 <style>
-/* Reset & Fonts */
-* { box-sizing: border-box; margin:0; padding:0; }
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f5f5f5; color:#333; transition: all 0.3s; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f5f5f5; color:#333; transition: all 0.3s;}
 .dark { background:#121212; color:#eee; }
-header { padding:12px 20px; background:#FD5A1E; color:#fff; font-size:20px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); position: sticky; top:0; z-index:1001; }
+header { padding:12px 20px; background:#FD5A1E; color:#fff; font-size:20px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); position: sticky; top:0; z-index:1003; }
 
-/* Sidebar Toggle Button */
-#sidebarToggle {
-  display:none;
-  position:fixed;
-  top:12px;
-  left:12px;
-  background:#FD5A1E;
-  color:#fff;
-  border:none;
-  padding:8px 12px;
-  border-radius:6px;
-  cursor:pointer;
-  z-index:1002;
-}
+#sidebarToggle { display:none; position:fixed; top:12px; left:12px; background:#FD5A1E; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; z-index:1004; }
 
-/* Layout */
-#container { display:flex; height:calc(100dvh - 52px); transition: all 0.3s; }
-#sidebar { width:70vw; max-width:250px; min-width:200px; background:#fff; border-right:1px solid #ddd; overflow-y:auto; transition: transform 0.3s ease; top:52px; height:calc(100dvh - 52px); z-index:1000; position:fixed; }
+#container { display:flex; height:calc(100vh - 52px); transition: all 0.3s; }
+#sidebar { width:70vw; max-width:250px; min-width:200px; background:#fff; border-right:1px solid #ddd; overflow-y:auto; transition: transform 0.3s ease; top:52px; height:calc(100vh - 52px); z-index:1002; position:fixed; transform: translateX(-260px);}
 #sidebar.dark { background:#1f1f1f; border-color:#333; }
 #sidebar h3 { padding:12px 10px; font-size:16px; color:#FD5A1E; }
 #sidebar button { margin:5px 10px; padding:6px 10px; border:none; border-radius:6px; background:#FD5A1E; color:#fff; cursor:pointer; transition:0.2s; }
@@ -40,7 +24,7 @@ header { padding:12px 20px; background:#FD5A1E; color:#fff; font-size:20px; text
 #historyList li { padding:8px 6px; border-radius:6px; margin-bottom:5px; background:#eee; cursor:pointer; transition:0.2s; }
 #historyList li:hover { background:#FD5A1E; color:#fff; }
 
-#main { flex:1; display:flex; flex-direction:column; padding:10px; margin-left:0; margin-top:52px; height:calc(100dvh - 52px); }
+#main { flex:1; display:flex; flex-direction:column; padding:10px; margin-left:0; margin-top:52px; height:calc(100vh - 52px); }
 #chat { flex:1; overflow-y:auto; padding:10px; border-radius:12px; border:1px solid #ccc; background:#fafafa; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
 .dark #chat { background:#1e1e1e; border-color:#333; }
 
@@ -55,18 +39,19 @@ button.action { background:#FD5A1E; color:#fff; border:none; border-radius:8px; 
 button.action:hover { background:#e04f1a; }
 
 img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer; border:2px solid #FD5A1E; border-radius:6px; }
-#modalOverlay { display:none; position:fixed; top:0; left:0; width:100vw; height:100dvh; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:999; }
+#modalOverlay { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:999; }
 #modalOverlay img { max-width:90vw; max-height:90vh; border-radius:8px; }
 
-/* Responsive & Collapsible Sidebar */
 @media(max-width:768px){
   #sidebarToggle { display:block; }
-  #sidebar { left:-260px; top:52px; height:calc(100dvh - 52px); }
-  #sidebar.show { transform:translateX(260px); }
-  #container { flex-direction:column; }
+  #sidebar.show { transform:translateX(0); }
   #main { margin-left:0; }
   button.action { width:48%; }
   button.action + button.action { margin-left:4%; }
+}
+
+@media(min-width:769px){
+  #main { margin-left:250px; }
 }
 </style>
 </head>
@@ -87,6 +72,13 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
     </label>
     <button onclick="clearKey()">Clear API Key</button>
 
+    <label>Mode:
+      <select id="actionMode">
+        <option value="text">Text Chat</option>
+        <option value="image">Generate Image</option>
+      </select>
+    </label>
+
     <label>Model:
       <select id="modelSelect">
         <option value="gpt-5">GPT-5 (Recommended)</option>
@@ -98,9 +90,9 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
 
     <label>Image Size:
       <select id="imageSizeSelect">
-        <option value="256x256">256x256 (Fast)</option>
-        <option value="512x512" selected>512x512 (Medium)</option>
-        <option value="1024x1024">1024x1024 (High Quality)</option>
+        <option value="256x256">256x256</option>
+        <option value="512x512" selected>512x512</option>
+        <option value="1024x1024">1024x1024</option>
       </select>
     </label>
 
@@ -114,10 +106,7 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
     <div id="typing" style="display:none;">GPT is typing...</div>
 
     <textarea id="userInput" placeholder="Type your message..."></textarea>
-    <div style="margin-top:10px; display:flex; flex-wrap:wrap;">
-      <button class="action" onclick="sendMessage()">Send</button>
-      <button class="action" onclick="generateImage()">Generate Image</button>
-    </div>
+    <button class="action" id="actionButton">Send / Generate</button>
   </div>
 </div>
 
@@ -126,6 +115,7 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
 <script>
 // Elements
 const apiKeyInput = document.getElementById("apiKey");
+const actionMode = document.getElementById("actionMode");
 const modelSelect = document.getElementById("modelSelect");
 const chatDiv = document.getElementById("chat");
 const userInput = document.getElementById("userInput");
@@ -138,6 +128,7 @@ const fileInput = document.getElementById("fileInput");
 const sidebar = document.getElementById("sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
 const imageSizeSelect = document.getElementById("imageSizeSelect");
+const actionButton = document.getElementById("actionButton");
 
 const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o-mini':0.0015, 'gpt-4o':0.003, 'gpt-5':0.005 };
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
@@ -153,6 +144,19 @@ darkToggle.onchange = ()=>{ document.body.classList.toggle("dark"); saveSettings
 
 // Sidebar toggle for mobile
 sidebarToggle.onclick = ()=>{ sidebar.classList.toggle("show"); };
+
+// Swipeable sidebar for mobile
+let startX = 0;
+let currentX = 0;
+let isDragging = false;
+document.addEventListener("touchstart", e=>{ startX = e.touches[0].clientX; });
+document.addEventListener("touchmove", e=>{
+  currentX = e.touches[0].clientX;
+  let dx = currentX - startX;
+  if(dx>50){ sidebar.classList.add("show"); }
+  if(dx<-50){ sidebar.classList.remove("show"); }
+});
+document.addEventListener("touchend", e=>{ startX=0; currentX=0; isDragging=false; });
 
 // File upload
 fileInput.addEventListener("change", (event)=>{
@@ -189,8 +193,6 @@ function renderHistory(){
     li.onclick=()=>{
       currentChat=chat.messages; currentChatName=chat.name; chatDiv.innerHTML="";
       currentChat.forEach(m=>addMsg(m.role,m.text,m.meta,m.isImage,m.imgUrl));
-
-      // Auto-collapse sidebar on mobile
       if(window.innerWidth <= 768){ sidebar.classList.remove("show"); }
     };
 
@@ -233,10 +235,13 @@ async function generateImage() {
   } catch(err){ typingDiv.style.display="none"; addMsg("assistant","Error: "+err.message); }
 }
 
-// Send message on Enter
-userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }});
-function clearKey(){ apiKeyInput.value=""; saveSettings(); }
+// Unified action button
+actionButton.onclick = ()=>{ if(actionMode.value==="text"){ sendMessage(); } else { generateImage(); } };
 
+// Send message on Enter
+userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); actionButton.click(); }});
+
+function clearKey(){ apiKeyInput.value=""; saveSettings(); }
 </script>
 </body>
 </html>
