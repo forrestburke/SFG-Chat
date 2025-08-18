@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Giants GPT</title>
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/3/30/San_Francisco_Giants_Logo.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/en/3/30/San_Francisco_Giants_Logo.svg">
@@ -15,18 +15,17 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 header { padding:12px 20px; background:#FD5A1E; color:#fff; font-size:20px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); position: sticky; top:0; z-index:1000; }
 
 /* Layout */
-#container { display:flex; height:calc(100vh - 52px); transition: all 0.3s; }
-#sidebar { width:250px; background:#fff; border-right:1px solid #ddd; overflow-y:auto; transition: transform 0.3s ease; }
+#container { display:flex; height:calc(100dvh - 52px); transition: all 0.3s; }
+#sidebar { width:70vw; max-width:250px; min-width:200px; background:#fff; border-right:1px solid #ddd; overflow-y:auto; transition: transform 0.3s ease; }
 #sidebar.dark { background:#1f1f1f; border-color:#333; }
 #sidebar h3 { padding:12px 10px; font-size:16px; color:#FD5A1E; }
 #sidebar button { margin:5px 10px; padding:6px 10px; border:none; border-radius:6px; background:#FD5A1E; color:#fff; cursor:pointer; transition:0.2s; }
 #sidebar button:hover { background:#e04f1a; }
-
 #historyList { list-style:none; padding:0 10px; }
 #historyList li { padding:8px 6px; border-radius:6px; margin-bottom:5px; background:#eee; cursor:pointer; transition:0.2s; }
 #historyList li:hover { background:#FD5A1E; color:#fff; }
 
-#main { flex:1; display:flex; flex-direction:column; padding:10px; }
+#main { flex:1; display:flex; flex-direction:column; padding:10px; height:100%; }
 #chat { flex:1; overflow-y:auto; padding:10px; border-radius:12px; border:1px solid #ccc; background:#fafafa; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
 .dark #chat { background:#1e1e1e; border-color:#333; }
 
@@ -36,18 +35,18 @@ header { padding:12px 20px; background:#FD5A1E; color:#fff; font-size:20px; text
 .dark .assistant { background:#2a2a2a; color:#eee; }
 .meta { font-size:10px; color:#666; margin-top:4px; }
 
-textarea, input, select { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:5px; }
+textarea, input, select, button { width:100%; max-width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:5px; }
 button.action { background:#FD5A1E; color:#fff; border:none; border-radius:8px; padding:10px 16px; margin-top:5px; cursor:pointer; transition:0.2s; }
 button.action:hover { background:#e04f1a; }
 
-img.thumb { width:100px; height:auto; margin:5px; cursor:pointer; border:2px solid #FD5A1E; border-radius:6px; }
-#modalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:999; }
-#modalOverlay img { max-width:90%; max-height:90%; border-radius:8px; }
+img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer; border:2px solid #FD5A1E; border-radius:6px; }
+#modalOverlay { display:none; position:fixed; top:0; left:0; width:100vw; height:100dvh; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:999; }
+#modalOverlay img { max-width:90vw; max-height:90vh; border-radius:8px; }
 
 /* Responsive & Collapsible Sidebar */
 #sidebarToggle { display:none; position:absolute; top:15px; left:15px; background:#FD5A1E; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; z-index:1001; }
 @media(max-width:768px){
-  #sidebar { position:absolute; left:-260px; height:100%; z-index:1000; box-shadow:2px 0 5px rgba(0,0,0,0.2); }
+  #sidebar { position:absolute; left:-260px; height:100dvh; z-index:1000; box-shadow:2px 0 5px rgba(0,0,0,0.2); }
   #sidebar.show { transform:translateX(260px); }
   #sidebarToggle { display:block; }
   #container { flex-direction:column; }
@@ -64,7 +63,7 @@ img.thumb { width:100px; height:auto; margin:5px; cursor:pointer; border:2px sol
 </header>
 
 <div id="container">
-  <div id="sidebar" class="">
+  <div id="sidebar">
     <h3>Chats</h3>
     <button onclick="newChat()">New Chat</button>
     <ul id="historyList"></ul>
@@ -78,10 +77,18 @@ img.thumb { width:100px; height:auto; margin:5px; cursor:pointer; border:2px sol
 
     <label>Model:
       <select id="modelSelect">
-        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-        <option value="gpt-4o-mini">gpt-4o-mini</option>
-        <option value="gpt-4o">gpt-4o</option>
-        <option value="gpt-5">gpt-5</option>
+        <option value="gpt-5">GPT-5 (Recommended)</option>
+        <option value="gpt-4o">GPT-4o</option>
+        <option value="gpt-4o-mini">GPT-4o-mini</option>
+        <option value="gpt-3.5-turbo">GPT-3.5-turbo</option>
+      </select>
+    </label>
+
+    <label>Image Size:
+      <select id="imageSizeSelect">
+        <option value="256x256">256x256 (Fast)</option>
+        <option value="512x512" selected>512x512 (Medium)</option>
+        <option value="1024x1024">1024x1024 (High Quality)</option>
       </select>
     </label>
 
@@ -105,7 +112,7 @@ img.thumb { width:100px; height:auto; margin:5px; cursor:pointer; border:2px sol
 <div id="modalOverlay" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
 
 <script>
-/* Elements */
+// Elements
 const apiKeyInput = document.getElementById("apiKey");
 const modelSelect = document.getElementById("modelSelect");
 const chatDiv = document.getElementById("chat");
@@ -118,23 +125,24 @@ const modalImg = document.getElementById("modalImg");
 const fileInput = document.getElementById("fileInput");
 const sidebar = document.getElementById("sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const imageSizeSelect = document.getElementById("imageSizeSelect");
 
 const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o-mini':0.0015, 'gpt-4o':0.003, 'gpt-5':0.005 };
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
 let currentChat = [];
 let currentChatName = "";
 
-/* Settings */
+// Settings
 function saveSettings(){ localStorage.setItem("apiKey", apiKeyInput.value); localStorage.setItem("model", modelSelect.value); localStorage.setItem("dark", darkToggle.checked?"true":"false"); }
-function loadSettings(){ apiKeyInput.value = localStorage.getItem("apiKey")||""; modelSelect.value = localStorage.getItem("model")||"gpt-4o-mini"; if(localStorage.getItem("dark")==="true"){ darkToggle.checked=true; document.body.classList.add("dark"); } renderHistory(); }
+function loadSettings(){ apiKeyInput.value = localStorage.getItem("apiKey")||""; modelSelect.value = localStorage.getItem("model")||"gpt-5"; if(localStorage.getItem("dark")==="true"){ darkToggle.checked=true; document.body.classList.add("dark"); } renderHistory(); }
 loadSettings();
 apiKeyInput.onchange = saveSettings; modelSelect.onchange = saveSettings;
 darkToggle.onchange = ()=>{ document.body.classList.toggle("dark"); saveSettings(); };
 
-/* Sidebar toggle for mobile */
+// Sidebar toggle for mobile
 sidebarToggle.onclick = ()=>{ sidebar.classList.toggle("show"); };
 
-/* File upload */
+// File upload
 fileInput.addEventListener("change", (event)=>{
   const file = event.target.files[0];
   if(!file) return;
@@ -146,7 +154,7 @@ fileInput.addEventListener("change", (event)=>{
   reader.readAsText(file);
 });
 
-/* Add messages */
+// Add messages
 function addMsg(role,text,meta="",isImage=false,imgUrl=""){
   const div = document.createElement("div");
   div.className = "message "+(role==="user"?"user":"assistant");
@@ -158,12 +166,12 @@ function addMsg(role,text,meta="",isImage=false,imgUrl=""){
 }
 function saveCurrentChat(){ localStorage.setItem("currentChat",JSON.stringify(currentChat)); }
 
-/* Chat history */
+// Chat history
 function saveChatToHistory(){ if(currentChat.length===0) return; let firstMsg = currentChat.find(m=>m.role==="user")?.text||"Chat"; currentChatName = firstMsg.length>20?firstMsg.slice(0,20)+"...":firstMsg; chatHistory.push({name: currentChatName,messages: currentChat}); localStorage.setItem("chatHistory",JSON.stringify(chatHistory)); renderHistory(); }
 function renderHistory(){ historyList.innerHTML=""; chatHistory.forEach((chat,index)=>{ const li = document.createElement("li"); li.textContent = chat.name; li.onclick = ()=>{ currentChat = chat.messages; currentChatName = chat.name; chatDiv.innerHTML=""; currentChat.forEach(m=>addMsg(m.role,m.text,m.meta,m.isImage,m.imgUrl)); }; li.ondblclick = ()=>{ const newName = prompt("Rename chat:",chat.name); if(newName) { chatHistory[index].name = newName; localStorage.setItem("chatHistory",JSON.stringify(chatHistory)); renderHistory(); } }; historyList.appendChild(li); }); }
 function newChat(){ if(currentChat.length>0) saveChatToHistory(); chatDiv.innerHTML=""; currentChat=[]; currentChatName=""; }
 
-/* Send GPT message */
+// Send GPT message
 async function sendMessage(){
   const key = apiKeyInput.value.trim(); const content = userInput.value.trim(); const model = modelSelect.value; if(!key||!content) return;
   addMsg("user",content); userInput.value=""; typingDiv.style.display="block";
@@ -176,27 +184,27 @@ async function sendMessage(){
   } catch(err){ typingDiv.style.display="none"; addMsg("assistant","Error: "+err.message); }
 }
 
-/* Generate image */
+// Generate image
 async function generateImage() {
-  const key = apiKeyInput.value.trim(); const prompt = userInput.value.trim(); if (!key || !prompt) return;
+  const key = apiKeyInput.value.trim(); const prompt = userInput.value.trim(); const size = imageSizeSelect.value; if (!key || !prompt) return;
   addMsg("user", prompt); userInput.value = ""; typingDiv.style.display = "block";
   try {
     const res = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}`, },
-      body: JSON.stringify({ prompt: prompt, n: 1, size: "512x512", }),
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+      body: JSON.stringify({ model: "gpt-image-1", prompt: prompt, n: 1, size: size })
     });
-    const data = await res.json(); typingDiv.style.display = "none";
-    if (data.error) { addMsg("assistant", `Error: ${data.error.message}`); return; }
-    if (!data.data || !data.data[0] || !data.data[0].url) { addMsg("assistant", "Error: Unexpected response from OpenAI Images API."); console.error(data); return; }
-    addMsg("assistant", "", "", true, data.data[0].url);
-  } catch (err) { typingDiv.style.display = "none"; addMsg("assistant", `Error: ${err.message}`); }
+    const data = await res.json(); typingDiv.style.display="none";
+    if(data.error){ addMsg("assistant","Error: "+data.error.message); return; }
+    const imgUrl = data.data[0].url;
+    addMsg("assistant","",`Image generated`,true,imgUrl);
+  } catch(err){ typingDiv.style.display="none"; addMsg("assistant","Error: "+err.message); }
 }
 
-function clearKey(){ if(confirm("Remove saved API key?")){ localStorage.removeItem("apiKey"); apiKeyInput.value=""; } }
-userInput.addEventListener("keydown", function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendMessage(); } });
+// Send message on Enter
+userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }});
+function clearKey(){ apiKeyInput.value=""; saveSettings(); }
 
-renderHistory();
 </script>
 </body>
 </html>
