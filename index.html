@@ -20,10 +20,10 @@ header { padding:12px 20px; background:#000; color:#fff; font-size:20px; text-al
 header button { background:#FD5A1E; border:none; color:#fff; padding:6px 10px; border-radius:6px; cursor:pointer; }
 
 #container { display:flex; flex-direction:column; height:calc(100vh - 52px); padding:10px; }
-#chat { flex:1; overflow-y:auto; padding:10px; border-radius:12px; border:1px solid #ccc; background:#fafafa; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+#chat { flex:1; overflow-y:auto; padding:10px; border-radius:12px; border:1px solid #ccc; background:#fafafa; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05); transition:0.3s;}
 .dark #chat { background:#1e1e1e; border-color:#333; }
 
-.message { margin:10px 0; padding:12px 16px; border-radius:20px; max-width:75%; word-wrap: break-word; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+.message { margin:10px 0; padding:12px 16px; border-radius:20px; max-width:75%; word-wrap: break-word; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:0.2s;}
 .user { background:#FD5A1E; color:#fff; margin-left:auto; text-align:right; }
 .assistant { background:#fff; color:#333; margin-right:auto; }
 .dark .assistant { background:#2a2a2a; color:#eee; }
@@ -37,18 +37,23 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
 #modalOverlay { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); justify-content:center; align-items:flex-start; padding-top:60px; z-index:999; }
 #modalOverlay img { max-width:90vw; max-height:90vh; border-radius:8px; }
 
-#historyDrawer { position:fixed; top:0; right:-400px; width:300px; height:100%; background:#fff; box-shadow:-2px 0 8px rgba(0,0,0,0.3); transition:0.3s; z-index:1002; overflow-y:auto; padding:20px; }
+/* Drawer with blur backdrop */
+#historyBackdrop { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); backdrop-filter:blur(4px); z-index:1001; opacity:0; pointer-events:none; transition:opacity 0.3s ease-in-out; }
+#historyBackdrop.open { opacity:1; pointer-events:auto; }
+
+#historyDrawer { position:fixed; top:0; right:0; width:300px; max-width:80vw; height:100%; background:#fff; box-shadow:-2px 0 8px rgba(0,0,0,0.3); transform: translateX(100%); transition: transform 0.3s ease-in-out; z-index:1002; overflow-y:auto; padding:20px; box-sizing:border-box; border-left:1px solid #FD5A1E; }
 #historyDrawer.dark { background:#1e1e1e; color:#eee; }
 #historyDrawer h3 { margin-bottom:10px; color:#FD5A1E; }
-#historyDrawer ul { list-style:none; }
+#historyDrawer ul { list-style:none; padding:0; margin:0; }
 #historyDrawer li { padding:8px 10px; margin-bottom:5px; background:#f0f0f0; border-radius:6px; cursor:pointer; }
 #historyDrawer li:hover { background:#FD5A1E; color:#fff; }
 #historyDrawer button { background:#FD5A1E; border:none; color:#fff; padding:6px 10px; border-radius:6px; margin-top:10px; cursor:pointer; width:100%; }
 
+#historyDrawer.open { transform: translateX(0); }
+
 @media(max-width:768px){
   button.action { width:48%; }
   button.action + button.action { margin-left:4%; }
-  #historyDrawer { width:80%; }
 }
 </style>
 </head>
@@ -99,6 +104,8 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
 
 <div id="modalOverlay" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
 
+<!-- Drawer & Backdrop -->
+<div id="historyBackdrop" onclick="closeHistory()"></div>
 <div id="historyDrawer" class="dark">
   <h3>Previous Chats</h3>
   <ul id="historyList"></ul>
@@ -121,6 +128,7 @@ const imageSizeSelect = document.getElementById("imageSizeSelect");
 const sendButton = document.getElementById("sendButton");
 const generateButton = document.getElementById("generateButton");
 const historyDrawer = document.getElementById("historyDrawer");
+const historyBackdrop = document.getElementById("historyBackdrop");
 
 const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o-mini':0.0015, 'gpt-4o':0.003, 'gpt-5':0.005 };
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
@@ -182,8 +190,8 @@ function renderHistory(){
 function newChat(){ if(currentChat.length>0) saveChatToHistory(); chatDiv.innerHTML=""; currentChat=[]; currentChatName=""; }
 
 // History drawer
-function toggleHistory(){ if(historyDrawer.style.right==="0px"){ historyDrawer.style.right="-400px"; } else { historyDrawer.style.right="0px"; } }
-function closeHistory(){ historyDrawer.style.right="-400px"; }
+function toggleHistory(){ historyDrawer.classList.toggle("open"); historyBackdrop.classList.toggle("open"); }
+function closeHistory(){ historyDrawer.classList.remove("open"); historyBackdrop.classList.remove("open"); }
 
 // GPT API
 async function sendMessage(){
@@ -193,7 +201,9 @@ async function sendMessage(){
     const res = await fetch("https://api.openai.com/v1/chat/completions",{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+key }, body: JSON.stringify({model,messages:[{role:"user",content}]})});
     const data = await res.json(); typingDiv.style.display="none";
     if(data.error){ addMsg("assistant","Error: "+data.error.message); return; }
-    const reply = data.choices[0].message.content; const tok = data.usage.total_tokens; const cost = (tok/1000*costPerThousandTokens[model]).toFixed(5);
+    const reply = data.choices[0]?.message?.content || "No response";
+    const tok = data.usage?.total_tokens || 0; 
+    const cost = (tok/1000*costPerThousandTokens[model]).toFixed(5);
     addMsg("assistant",reply,`Tokens: ${tok} | Cost: $${cost}`);
   } catch(err){ typingDiv.style.display="none"; addMsg("assistant","Error: "+err.message); }
 }
@@ -210,6 +220,7 @@ async function generateImage() {
     });
     const data = await res.json(); typingDiv.style.display="none";
     if(data.error){ addMsg("assistant","Error: "+data.error.message); return; }
+    if(!data.data || !data.data[0]?.url){ addMsg("assistant","Error: No image returned"); return; }
     const imgUrl = data.data[0].url;
     addMsg("assistant","",`Image generated`,true,imgUrl);
   } catch(err){ typingDiv.style.display="none"; addMsg("assistant","Error: "+err.message); }
