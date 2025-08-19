@@ -5,56 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Giants GPT</title>
 
-<!-- Favicon / Home screen -->
 <link rel="icon" href="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png" type="image/png">
 <link rel="apple-touch-icon" href="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png">
 <meta name="apple-mobile-web-app-capable" content="yes" />
 
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin:0; padding:0; }
 body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#333; }
 .dark body { background:#121212; color:#eee; }
 
 #headerImg {
-  padding: 12px 20px;
+  padding:12px 20px;
   background: #000;
   color: #fff;
-  font-size: 20px;
-  text-align: center;
-  border-radius: 8px;
+  font-size:20px;
+  text-align:center;
+  border-radius:8px;
+  margin:10px auto;
 }
 #headerImg img { height:40px; vertical-align: middle; margin-right:10px; }
 #headerImg span { vertical-align:middle; font-weight:bold; }
 
-#historyToggleWrap { display:none; }
-#main { display:flex; height:calc(100vh - 160px); overflow:hidden; margin-top:10px; }
+#mainWrapper {
+  display:flex;
+  justify-content:center;
+  width:100%;
+}
+
+#main {
+  display:flex;
+  max-width: 1000px;
+  width:100%;
+  flex-direction:row;
+  padding:10px;
+  gap:10px;
+}
 
 #historyDrawer {
-  width: 260px; max-width: 80vw;
+  width:260px;
+  max-width:80vw;
   background:#fff;
   border-right:1px solid #FD5A1E;
   box-shadow: 2px 0 8px rgba(0,0,0,0.2);
-  transform: translateX(-100%);
+  border-radius:8px;
+  padding:20px;
+  overflow-y:auto;
+  flex-shrink:0;
   transition: transform 0.3s ease-in-out;
-  padding: 20px; overflow-y:auto; border-radius:8px 0 0 8px;
-  position: relative;
-  z-index:2;
-}
-#historyDrawer.open {
-  transform: translateX(0);
+  max-height:calc(100vh - 40px);
 }
 #historyDrawer.dark { background:#1e1e1e; color:#eee; }
 #historyDrawer h3 { margin-bottom:10px; color:#FD5A1E; }
 #historyDrawer ul { list-style:none; margin:0; padding:0; }
 #historyDrawer li { padding:8px; margin-bottom:6px; background:#f0f0f0; border-radius:6px; cursor:pointer; }
 #historyDrawer li:hover { background:#FD5A1E; color:#fff; }
-#historyDrawer button {
-  width:100%; margin-top:8px; padding:8px;
-  background:#FD5A1E; color:#fff; border:none; border-radius:6px;
-}
+#historyDrawer button { width:100%; margin-top:8px; padding:8px; background:#FD5A1E; color:#fff; border:none; border-radius:6px; cursor:pointer; }
 
 #container {
-  flex:1; display:flex; flex-direction:column; padding:10px;
+  flex:1;
+  display:flex; flex-direction:column; padding:10px;
 }
 
 #chat {
@@ -65,7 +74,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#3
 }
 .dark #chat { background:#1e1e1e; border-color:#333; }
 
-.message { margin:8px 0; padding:10px 14px; border-radius:18px; max-width:75%; }
+.message { margin:8px 0; padding:10px 14px; border-radius:18px; max-width:75%; word-wrap: break-word; }
 .user { background:#FD5A1E; color:white; margin-left:auto; }
 .assistant { background:white; color:black; }
 .dark .assistant { background:#333; color:white; }
@@ -80,15 +89,13 @@ button.action:hover { background:#e04f1a; }
 
 #btnRow { display:flex; gap:4%; flex-wrap:wrap; margin-bottom:5px; }
 
-#exportBtn { background:#007AFF; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; margin-bottom:5px; width:100%; }
-#exportBtn:hover { background:#005FCC; }
-
-#tokenCost { font-size:12px; color:#555; margin-top:4px; }
+#exportBtn { background:#FD5A1E; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; margin-bottom:5px; width:100%; }
+#exportBtn:hover { background:#e04f1a; }
 
 #fabHistory {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom:20px;
+  left:20px;
   width:50px; height:50px;
   background:#FD5A1E;
   border-radius:50%;
@@ -98,12 +105,13 @@ button.action:hover { background:#e04f1a; }
   line-height:50px;
   cursor:pointer;
   z-index:10;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+  box-shadow:2px 2px 8px rgba(0,0,0,0.3);
 }
 
 @media(max-width:768px){
   #main { flex-direction:column; }
-  #historyDrawer { width:100%; max-height:50vh; border-right:none; border-bottom:2px solid #FD5A1E; }
+  #historyDrawer { position:absolute; top:70px; left:0; width:80vw; height:calc(100% - 80px); transform: translateX(-100%); z-index:10; transition: transform 0.3s ease-in-out; }
+  #historyDrawer.open { transform: translateX(0); }
 }
 </style>
 </head>
@@ -114,47 +122,49 @@ button.action:hover { background:#e04f1a; }
   <span>⚾ Giants GPT</span>
 </div>
 
-<div id="main">
-  <div id="historyDrawer" class="dark">
-    <h3>Previous Chats</h3>
-    <ul id="historyList"></ul>
-    <button onclick="newChat()">New Chat</button>
-  </div>
-
-  <div id="container">
-    <label>API Key: <input type="password" id="apiKey" placeholder="Your OpenAI API key"></label>
-    <label>Current Chat Name: <input type="text" id="currentChatName" placeholder="Chat title..."></label>
-
-    <label>Model:
-      <select id="modelSelect">
-        <option value="gpt-5">GPT-5</option>
-        <option value="gpt-4o">GPT-4o</option>
-        <option value="gpt-3.5-turbo">GPT-3.5</option>
-      </select>
-    </label>
-
-    <label>Image Size:
-      <select id="imageSizeSelect">
-        <option>256x256</option>
-        <option selected>512x512</option>
-        <option>1024x1024</option>
-      </select>
-    </label>
-
-    <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
-
-    <div id="chat"></div>
-    <div id="typingIndicator">GPT is thinking...</div>
-
-    <button id="exportBtn">Export Chat</button>
-
-    <textarea id="userInput" placeholder="Type here..."></textarea>
-    <div id="btnRow">
-      <button class="action" id="sendBtn">Send</button>
-      <button class="action" id="imageBtn">Generate Image</button>
+<div id="mainWrapper">
+  <div id="main">
+    <div id="historyDrawer" class="dark">
+      <h3>Previous Chats</h3>
+      <ul id="historyList"></ul>
+      <button onclick="newChat()">New Chat</button>
     </div>
 
-    <div id="tokenCost"></div>
+    <div id="container">
+      <label>API Key: <input type="password" id="apiKey" placeholder="Your OpenAI API key"></label>
+      <label>Current Chat Name: <input type="text" id="currentChatName" placeholder="Chat title..."></label>
+
+      <label>Model:
+        <select id="modelSelect">
+          <option value="gpt-5">GPT-5</option>
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="gpt-3.5-turbo">GPT-3.5</option>
+        </select>
+      </label>
+
+      <label>Image Size:
+        <select id="imageSizeSelect">
+          <option>256x256</option>
+          <option selected>512x512</option>
+          <option>1024x1024</option>
+        </select>
+      </label>
+
+      <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
+
+      <div id="chat"></div>
+      <div id="typingIndicator">GPT is thinking...</div>
+
+      <button id="exportBtn">Export Chat</button>
+
+      <textarea id="userInput" placeholder="Type here..."></textarea>
+      <div id="btnRow">
+        <button class="action" id="sendBtn">Send</button>
+        <button class="action" id="imageBtn">Generate Image</button>
+      </div>
+
+      <div id="tokenCost"></div>
+    </div>
   </div>
 </div>
 
@@ -254,12 +264,20 @@ async function generateImage(){
         size:imageSizeSelect.value
       })
     });
+
     const data = await res.json();
     typingIndicator.style.display="none";
-    if(!data.data || !data.data[0]) { addMsg("assistant","Image generation error"); return; }
+
+    if(!data || !data.data || !data.data[0] || !data.data[0].url){
+      addMsg("assistant","Image generation error: No image returned.");
+      return;
+    }
     const url=data.data[0].url;
     addMsg("assistant","",true,url);
-  } catch(err){ typingIndicator.style.display="none"; addMsg("assistant","Error: "+err.message); }
+  } catch(err){
+    typingIndicator.style.display="none";
+    addMsg("assistant","Error: "+err.message);
+  }
 }
 
 function renderHistory(){
@@ -277,6 +295,9 @@ function renderHistory(){
     };
     historyList.appendChild(li);
   });
+  // auto-resize drawer height
+  const maxHeight = window.innerHeight - 100;
+  historyDrawer.style.maxHeight = maxHeight + "px";
 }
 
 function newChat(){
