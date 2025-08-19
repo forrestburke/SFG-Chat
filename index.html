@@ -244,11 +244,14 @@ async function sendMessage(){
     const res = await fetch("/api/chat", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ model:modelSelect.value, messages:[{role:"user",content}] })
+      body:JSON.stringify({
+        model: modelSelect.value,
+        messages: [{role: "user", content}]
+      })
     });
     const data = await res.json();
     typingIndicator.style.display="none";
-    if(data.error) { addMsg("assistant","Error: "+data.error.message); return; }
+    if (data.error) { addMsg("assistant","Error: "+data.error.message); return; }
     const reply = data.choices[0]?.message?.content;
     addMsg("assistant",reply || "(no response)");
     updateTokenCost(data.usage?.total_tokens || 0);
@@ -260,6 +263,7 @@ async function sendMessage(){
 
 async function generateImage(){
   const prompt = userInput.value.trim();
+  const size = imageSizeSelect.value;
   if(!prompt) return;
 
   addMsg("user",prompt);
@@ -270,7 +274,7 @@ async function generateImage(){
     const res = await fetch("/api/image", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ prompt, size:imageSizeSelect.value })
+      body:JSON.stringify({ prompt, size })
     });
     const data = await res.json();
     imageLoader.style.display="none";
@@ -279,8 +283,7 @@ async function generateImage(){
       addMsg("assistant","Image generation error: No image returned.");
       return;
     }
-    const url=data.data[0].url;
-    addMsg("assistant","",true,url);
+    addMsg("assistant","",true,data.data[0].url);
 
   } catch(err){
     imageLoader.style.display="none";
