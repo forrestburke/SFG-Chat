@@ -1,0 +1,10 @@
+# Node / environment
+node_modules/
+.env
+
+# IDE / OS files
+.DS_Store
+Thumbs.db
+
+# Optional: ignore log files
+npm-debug.log*
