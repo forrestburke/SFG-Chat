@@ -26,13 +26,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#3
 #headerImg img { height:40px; vertical-align: middle; margin-right:10px; }
 #headerImg span { vertical-align:middle; font-weight:bold; }
 
-#historyToggleWrap { text-align:right; margin: 10px; }
-#historyToggleWrap button {
-  background:#FD5A1E; color:white;
-  border:none; padding:8px 14px; border-radius:6px;
-  cursor:pointer;
-}
-
+#historyToggleWrap { display:none; }
 #main { display:flex; height:calc(100vh - 160px); overflow:hidden; margin-top:10px; }
 
 #historyDrawer {
@@ -43,6 +37,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#3
   transform: translateX(-100%);
   transition: transform 0.3s ease-in-out;
   padding: 20px; overflow-y:auto; border-radius:8px 0 0 8px;
+  position: relative;
+  z-index:2;
 }
 #historyDrawer.open {
   transform: translateX(0);
@@ -52,7 +48,6 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#3
 #historyDrawer ul { list-style:none; margin:0; padding:0; }
 #historyDrawer li { padding:8px; margin-bottom:6px; background:#f0f0f0; border-radius:6px; cursor:pointer; }
 #historyDrawer li:hover { background:#FD5A1E; color:#fff; }
-
 #historyDrawer button {
   width:100%; margin-top:8px; padding:8px;
   background:#FD5A1E; color:#fff; border:none; border-radius:6px;
@@ -66,6 +61,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#3
   flex:1; overflow-y:auto; background:#fafafa;
   border:1px solid #ccc; border-radius:10px;
   padding:10px; margin-bottom:10px;
+  position:relative;
 }
 .dark #chat { background:#1e1e1e; border-color:#333; }
 
@@ -74,16 +70,38 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#3
 .assistant { background:white; color:black; }
 .dark .assistant { background:#333; color:white; }
 
+#typingIndicator { font-style:italic; color:#FD5A1E; margin:5px 0; display:none; }
+
 textarea, input, select {
   width:100%; padding:10px; border-radius:8px; margin-top:5px; border:1px solid #ccc;
 }
 button.action { background:#FD5A1E; color:white; border:none; padding:10px; border-radius:8px; margin-top:5px; cursor:pointer; width:48%; }
 button.action:hover { background:#e04f1a; }
 
-#btnRow { display:flex; gap:4%; flex-wrap:wrap; }
+#btnRow { display:flex; gap:4%; flex-wrap:wrap; margin-bottom:5px; }
+
+#exportBtn { background:#007AFF; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; margin-bottom:5px; width:100%; }
+#exportBtn:hover { background:#005FCC; }
+
+#tokenCost { font-size:12px; color:#555; margin-top:4px; }
+
+#fabHistory {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width:50px; height:50px;
+  background:#FD5A1E;
+  border-radius:50%;
+  color:white;
+  font-size:24px;
+  text-align:center;
+  line-height:50px;
+  cursor:pointer;
+  z-index:10;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+}
 
 @media(max-width:768px){
-  #btnRow button { width:48%; }
   #main { flex-direction:column; }
   #historyDrawer { width:100%; max-height:50vh; border-right:none; border-bottom:2px solid #FD5A1E; }
 }
@@ -95,8 +113,6 @@ button.action:hover { background:#e04f1a; }
   <img src="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png" alt="Logo" />
   <span>⚾ Giants GPT</span>
 </div>
-
-<div id="historyToggleWrap"><button onclick="toggleHistory()">History</button></div>
 
 <div id="main">
   <div id="historyDrawer" class="dark">
@@ -128,14 +144,21 @@ button.action:hover { background:#e04f1a; }
     <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
 
     <div id="chat"></div>
+    <div id="typingIndicator">GPT is thinking...</div>
+
+    <button id="exportBtn">Export Chat</button>
 
     <textarea id="userInput" placeholder="Type here..."></textarea>
     <div id="btnRow">
       <button class="action" id="sendBtn">Send</button>
       <button class="action" id="imageBtn">Generate Image</button>
     </div>
+
+    <div id="tokenCost"></div>
   </div>
 </div>
+
+<div id="fabHistory" onclick="toggleHistory()">≡</div>
 
 <script>
 const apiKeyInput = document.getElementById("apiKey");
@@ -149,12 +172,16 @@ const sendBtn = document.getElementById("sendBtn");
 const imageBtn = document.getElementById("imageBtn");
 const currentChatNameInput = document.getElementById("currentChatName");
 const historyDrawer = document.getElementById("historyDrawer");
+const typingIndicator = document.getElementById("typingIndicator");
+const exportBtn = document.getElementById("exportBtn");
+const tokenCostDiv = document.getElementById("tokenCost");
 
 const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o':0.003, 'gpt-5':0.005 }
 
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
 let currentChat = [];
 let currentChatName = "";
+let totalTokens=0;
 
 function toggleHistory() { historyDrawer.classList.toggle("open"); }
 
@@ -171,62 +198,68 @@ function addMsg(role,text,isImage=false,imgUrl=""){
   currentChat.push({role,text,isImage,imgUrl});
 }
 
-function sendMessage(){
+function updateTokenCost(tokensUsed){
+  totalTokens += tokensUsed;
+  const cost = (totalTokens/1000) * (costPerThousandTokens[modelSelect.value]||0);
+  tokenCostDiv.textContent = `Tokens: ${totalTokens} | Approx. Cost: $${cost.toFixed(5)}`;
+}
+
+async function sendMessage(){
   const key = apiKeyInput.value.trim();
   const content = userInput.value.trim();
   if(!key||!content) return;
 
   addMsg("user",content);
   userInput.value="";
+  typingIndicator.style.display="block";
 
-  fetch("https://api.openai.com/v1/chat/completions",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json","Authorization":"Bearer "+key},
-    body:JSON.stringify({
-      model:modelSelect.value,
-      messages:[{role:"user",content}]
-    })
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    if(data.error) {
-      addMsg("assistant","Error: "+data.error.message);
-      return;
-    }
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","Authorization":"Bearer "+key},
+      body:JSON.stringify({
+        model:modelSelect.value,
+        messages:[{role:"user",content}]
+      })
+    });
+    const data = await res.json();
+    typingIndicator.style.display="none";
+    if(data.error) { addMsg("assistant","Error: "+data.error.message); return; }
     const reply = data.choices[0]?.message?.content;
     addMsg("assistant",reply || "(no response)");
-  })
-  .catch(err=> addMsg("assistant","Error: "+err.message));
+    updateTokenCost(data.usage?.total_tokens || 0);
+  } catch(err){
+    typingIndicator.style.display="none";
+    addMsg("assistant","Error: "+err.message);
+  }
 }
 
-function generateImage(){
+async function generateImage(){
   const key=apiKeyInput.value.trim();
   const prompt=userInput.value.trim();
   if(!key||!prompt) return;
 
   addMsg("user",prompt);
   userInput.value="";
+  typingIndicator.style.display="block";
 
-  fetch("https://api.openai.com/v1/images/generations",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json","Authorization":"Bearer "+key},
-    body:JSON.stringify({
-      model:"gpt-image-1",
-      prompt:prompt,
-      n:1,
-      size:imageSizeSelect.value
-    })
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    if(!data.data || !data.data[0]) {
-      addMsg("assistant","Image generation error");
-      return;
-    }
+  try {
+    const res = await fetch("https://api.openai.com/v1/images/generations",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","Authorization":"Bearer "+key},
+      body:JSON.stringify({
+        model:"gpt-image-1",
+        prompt:prompt,
+        n:1,
+        size:imageSizeSelect.value
+      })
+    });
+    const data = await res.json();
+    typingIndicator.style.display="none";
+    if(!data.data || !data.data[0]) { addMsg("assistant","Image generation error"); return; }
     const url=data.data[0].url;
     addMsg("assistant","",true,url);
-  })
-  .catch(err=> addMsg("assistant","Error: "+err.message));
+  } catch(err){ typingIndicator.style.display="none"; addMsg("assistant","Error: "+err.message); }
 }
 
 function renderHistory(){
@@ -248,9 +281,7 @@ function renderHistory(){
 
 function newChat(){
   if(currentChat.length>0){
-    if(!currentChatName){
-      currentChatName = currentChat[0].text.slice(0,20)+"...";
-    }
+    if(!currentChatName){ currentChatName = currentChat[0].text.slice(0,20)+"..."; }
     chatHistory.push({name: currentChatName, messages: currentChat});
     localStorage.setItem("chatHistory",JSON.stringify(chatHistory));
     renderHistory();
@@ -259,17 +290,28 @@ function newChat(){
   currentChat=[];
   currentChatName="";
   currentChatNameInput.value="";
+  totalTokens=0;
+  tokenCostDiv.textContent="";
 }
 
-// Save chat name as user edits
-currentChatNameInput.addEventListener("input",()=>{
-  currentChatName=currentChatNameInput.value;
-});
-
-// Theme & Settings
+currentChatNameInput.addEventListener("input",()=>{ currentChatName=currentChatNameInput.value; });
 darkToggle.addEventListener("change",()=>{
   document.body.classList.toggle("dark");
   historyDrawer.classList.toggle("dark");
+});
+
+exportBtn.addEventListener("click",()=>{
+  if(currentChat.length===0){ alert("No messages to export."); return; }
+  let text="Chat: "+(currentChatName||"Untitled")+"\n\n";
+  currentChat.forEach(m=>{
+    if(m.isImage) text+=`${m.role.toUpperCase()}: [IMAGE] ${m.imgUrl}\n`;
+    else text+=`${m.role.toUpperCase()}: ${m.text}\n`;
+  });
+  const blob = new Blob([text],{type:"text/plain"});
+  const link = document.createElement("a");
+  link.href=URL.createObjectURL(blob);
+  link.download=(currentChatName||"chat")+".txt";
+  link.click();
 });
 
 window.onload = ()=> renderHistory();
@@ -278,5 +320,6 @@ sendBtn.onclick = sendMessage;
 imageBtn.onclick = generateImage;
 userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }});
 </script>
+
 </body>
 </html>
