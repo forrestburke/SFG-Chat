@@ -11,7 +11,7 @@
 
 <style>
 * { box-sizing: border-box; margin:0; padding:0; }
-body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#333; display:flex; justify-content:center; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#333; }
 .dark body { background:#121212; color:#eee; }
 
 #headerImg {
@@ -108,18 +108,6 @@ button.action:hover { background:#e04f1a; }
   box-shadow:2px 2px 8px rgba(0,0,0,0.3);
 }
 
-#spinner {
-  display:none;
-  position:absolute;
-  bottom:10px; right:10px;
-  width:30px; height:30px;
-  border:4px solid #FD5A1E;
-  border-top:4px solid transparent;
-  border-radius:50%;
-  animation: spin 1s linear infinite;
-}
-@keyframes spin { 100% { transform:rotate(360deg); } }
-
 @media(max-width:768px){
   #main { flex-direction:column; }
   #historyDrawer { position:absolute; top:70px; left:0; width:80vw; height:calc(100% - 80px); transform: translateX(-100%); z-index:10; transition: transform 0.3s ease-in-out; }
@@ -166,7 +154,6 @@ button.action:hover { background:#e04f1a; }
 
       <div id="chat"></div>
       <div id="typingIndicator">GPT is thinking...</div>
-      <div id="spinner"></div>
 
       <button id="exportBtn">Export Chat</button>
 
@@ -198,7 +185,6 @@ const historyDrawer = document.getElementById("historyDrawer");
 const typingIndicator = document.getElementById("typingIndicator");
 const exportBtn = document.getElementById("exportBtn");
 const tokenCostDiv = document.getElementById("tokenCost");
-const spinner = document.getElementById("spinner");
 
 const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o':0.003, 'gpt-5':0.005 }
 
@@ -258,40 +244,48 @@ async function sendMessage(){
   }
 }
 
-async function generateImage(){
-  const key=apiKeyInput.value.trim();
-  const prompt=userInput.value.trim();
-  if(!key||!prompt) return;
+async function generateImage() {
+  const key = apiKeyInput.value.trim();
+  const prompt = userInput.value.trim();
+  if (!key || !prompt) return;
 
-  addMsg("user",prompt);
-  userInput.value="";
-  spinner.style.display="block";
+  addMsg("user", prompt);
+  userInput.value = "";
+  typingIndicator.style.display = "block";
 
   try {
-    const res = await fetch("https://api.openai.com/v1/images/generations",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json","Authorization":"Bearer "+key},
-      body:JSON.stringify({
-        model:"gpt-image-1",
-        prompt:prompt,
-        n:1,
-        size:imageSizeSelect.value || "512x512",
-        response_format:"url"
+    const res = await fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + key
+      },
+      body: JSON.stringify({
+        model: "gpt-image-1",
+        prompt: prompt,
+        n: 1,
+        size: ["256x256","512x512","1024x1024"].includes(imageSizeSelect.value) ? imageSizeSelect.value : "512x512"
       })
     });
-    const data = await res.json();
-    spinner.style.display="none";
-    console.log("Image API response:",data);
 
-    if(!data?.data?.[0]?.url){
-      addMsg("assistant","Image generation error: No image returned.");
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errText}`);
+    }
+
+    const data = await res.json();
+    typingIndicator.style.display = "none";
+
+    if (!data?.data?.[0]?.url) {
+      addMsg("assistant", "Image generation error: No image returned. Check API key or usage limits.");
       return;
     }
 
-    const url=data.data[0].url;
+    const url = data.data[0].url;
     addMsg("assistant","",true,url);
-  } catch(err){
-    spinner.style.display="none";
+
+  } catch (err) {
+    typingIndicator.style.display = "none";
     addMsg("assistant","Error: "+err.message);
   }
 }
@@ -311,6 +305,8 @@ function renderHistory(){
     };
     historyList.appendChild(li);
   });
+  const maxHeight = window.innerHeight - 100;
+  historyDrawer.style.maxHeight = maxHeight + "px";
 }
 
 function newChat(){
