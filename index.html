@@ -108,13 +108,10 @@ button.action:hover { background:#e04f1a; }
   box-shadow:2px 2px 8px rgba(0,0,0,0.3);
 }
 
-#imageLoading {
+#imageLoader {
   display:none;
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  font-weight:bold;
-  color:#FD5A1E;
+  text-align:center;
+  margin:10px 0;
 }
 
 @media(max-width:768px){
@@ -140,9 +137,7 @@ button.action:hover { background:#e04f1a; }
     </div>
 
     <div id="container">
-      <label>API Key: <input type="password" id="apiKey" placeholder="Your OpenAI API key"></label>
       <label>Current Chat Name: <input type="text" id="currentChatName" placeholder="Chat title..."></label>
-
       <label>Model:
         <select id="modelSelect">
           <option value="gpt-5">GPT-5</option>
@@ -163,7 +158,7 @@ button.action:hover { background:#e04f1a; }
 
       <div id="chat"></div>
       <div id="typingIndicator">GPT is thinking...</div>
-      <div id="imageLoading">Generating image...</div>
+      <div id="imageLoader">Generating image...</div>
 
       <button id="exportBtn">Export Chat</button>
 
@@ -181,7 +176,6 @@ button.action:hover { background:#e04f1a; }
 <div id="fabHistory" onclick="toggleHistory()">≡</div>
 
 <script>
-const apiKeyInput = document.getElementById("apiKey");
 const modelSelect = document.getElementById("modelSelect");
 const chatDiv = document.getElementById("chat");
 const userInput = document.getElementById("userInput");
@@ -195,9 +189,9 @@ const historyDrawer = document.getElementById("historyDrawer");
 const typingIndicator = document.getElementById("typingIndicator");
 const exportBtn = document.getElementById("exportBtn");
 const tokenCostDiv = document.getElementById("tokenCost");
-const imageLoading = document.getElementById("imageLoading");
+const imageLoader = document.getElementById("imageLoader");
 
-const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o':0.003, 'gpt-5':0.005 }
+const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o':0.003, 'gpt-5':0.005 };
 
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
 let currentChat = [];
@@ -211,20 +205,25 @@ function addMsg(role,text,isImage=false,imgUrl=""){
   div.className="message "+(role==="user"?"user":"assistant");
   if(isImage){
     const img=document.createElement("img");
-    img.src=imgUrl; img.style.maxWidth="100%"; img.style.borderRadius="6px"; img.style.opacity=0;
+    img.src=imgUrl; 
+    img.style.maxWidth="100%"; 
+    img.style.borderRadius="6px";
+    img.style.opacity=0;
     div.appendChild(img);
     chatDiv.appendChild(div);
     chatDiv.scrollTop=chatDiv.scrollHeight;
-    // Fade-in effect
-    let opacity=0;
-    const interval = setInterval(()=>{
-      opacity+=0.05;
-      img.style.opacity=opacity;
-      if(opacity>=1) clearInterval(interval);
+
+    let op=0;
+    const fadeIn=setInterval(()=>{
+      op+=0.05;
+      img.style.opacity=op;
+      if(op>=1) clearInterval(fadeIn);
     },30);
+
   } else { div.innerHTML=text.replace(/\n/g,"<br>"); chatDiv.appendChild(div); }
   chatDiv.scrollTop=chatDiv.scrollHeight;
-  currentChat.push({role,text,isImage,imgUrl});
+  if(!isImage) currentChat.push({role,text,isImage,imgUrl});
+  else currentChat.push({role,text,isImage,imgUrl});
 }
 
 function updateTokenCost(tokensUsed){
@@ -234,22 +233,18 @@ function updateTokenCost(tokensUsed){
 }
 
 async function sendMessage(){
-  const key = apiKeyInput.value.trim();
   const content = userInput.value.trim();
-  if(!key||!content) return;
+  if(!content) return;
 
   addMsg("user",content);
   userInput.value="";
   typingIndicator.style.display="block";
 
   try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions",{
+    const res = await fetch("/api/chat", {
       method:"POST",
-      headers:{ "Content-Type":"application/json","Authorization":"Bearer "+key},
-      body:JSON.stringify({
-        model:modelSelect.value,
-        messages:[{role:"user",content}]
-      })
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ model:modelSelect.value, messages:[{role:"user",content}] })
     });
     const data = await res.json();
     typingIndicator.style.display="none";
@@ -265,29 +260,30 @@ async function sendMessage(){
 
 async function generateImage(){
   const prompt = userInput.value.trim();
-  const size = imageSizeSelect.value;
   if(!prompt) return;
 
   addMsg("user",prompt);
   userInput.value="";
-  imageLoading.style.display="block";
+  imageLoader.style.display="block";
 
   try {
-    const res = await fetch("http://localhost:3000/generate-image", { // Replace with deployed URL if hosting server online
+    const res = await fetch("/api/image", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ prompt, size })
+      body:JSON.stringify({ prompt, size:imageSizeSelect.value })
     });
     const data = await res.json();
-    imageLoading.style.display="none";
+    imageLoader.style.display="none";
 
-    if(!data.url){
+    if(!data || !data.data || !data.data[0] || !data.data[0].url){
       addMsg("assistant","Image generation error: No image returned.");
       return;
     }
-    addMsg("assistant","",true,data.url);
+    const url=data.data[0].url;
+    addMsg("assistant","",true,url);
+
   } catch(err){
-    imageLoading.style.display="none";
+    imageLoader.style.display="none";
     addMsg("assistant","Error: "+err.message);
   }
 }
@@ -307,8 +303,6 @@ function renderHistory(){
     };
     historyList.appendChild(li);
   });
-  const maxHeight = window.innerHeight - 100;
-  historyDrawer.style.maxHeight = maxHeight + "px";
 }
 
 function newChat(){
