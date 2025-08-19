@@ -5,81 +5,98 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Giants GPT</title>
 
-<!-- Favicon & iOS Home Screen -->
+<!-- Favicon / Home screen -->
 <link rel="icon" href="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png" type="image/png">
 <link rel="apple-touch-icon" href="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Giants GPT">
+<meta name="apple-mobile-web-app-capable" content="yes" />
 
 <style>
-* { box-sizing:border-box; margin:0; padding:0; }
-body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f5f5f5; color:#333; transition: all 0.3s; }
-.dark { background:#121212; color:#eee; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#333; }
+.dark body { background:#121212; color:#eee; }
 
-#headerImg { padding:12px 20px; background:#000; color:#fff; font-size:20px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); border-radius:8px; margin:10px; }
-#headerImg img { height:40px; vertical-align:middle; margin-right:10px; }
-#headerImg span { vertical-align:middle; font-weight:bold; font-size:1.2em; }
+#headerImg {
+  padding: 12px 20px;
+  background: #000;
+  color: #fff;
+  font-size: 20px;
+  text-align: center;
+  border-radius: 8px;
+}
+#headerImg img { height:40px; vertical-align: middle; margin-right:10px; }
+#headerImg span { vertical-align:middle; font-weight:bold; }
 
-#main { display:flex; flex-direction:row; height:calc(100vh - 70px); overflow:hidden; margin-top:10px; }
+#historyToggleWrap { text-align:right; margin: 10px; }
+#historyToggleWrap button {
+  background:#FD5A1E; color:white;
+  border:none; padding:8px 14px; border-radius:6px;
+  cursor:pointer;
+}
+
+#main { display:flex; height:calc(100vh - 160px); overflow:hidden; margin-top:10px; }
+
 #historyDrawer {
-  width:260px; max-width:80vw;
+  width: 260px; max-width: 80vw;
   background:#fff;
-  box-shadow:2px 0 8px rgba(0,0,0,0.2);
-  transform:translateX(-100%);
-  transition:transform 0.3s ease-in-out;
-  overflow-y:auto; padding:20px; z-index:1002;
   border-right:1px solid #FD5A1E;
-  position:relative;
-  border-radius:8px;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out;
+  padding: 20px; overflow-y:auto; border-radius:8px 0 0 8px;
+}
+#historyDrawer.open {
+  transform: translateX(0);
 }
 #historyDrawer.dark { background:#1e1e1e; color:#eee; }
 #historyDrawer h3 { margin-bottom:10px; color:#FD5A1E; }
-#historyDrawer ul { list-style:none; padding:0; margin:0; }
-#historyDrawer li { padding:8px 10px; margin-bottom:5px; background:#f0f0f0; border-radius:6px; cursor:pointer; }
+#historyDrawer ul { list-style:none; margin:0; padding:0; }
+#historyDrawer li { padding:8px; margin-bottom:6px; background:#f0f0f0; border-radius:6px; cursor:pointer; }
 #historyDrawer li:hover { background:#FD5A1E; color:#fff; }
-#historyDrawer button { background:#FD5A1E; border:none; color:#fff; padding:6px 10px; border-radius:6px; margin-top:10px; cursor:pointer; width:100%; }
-#historyDrawer.open { transform:translateX(0); }
+
+#historyDrawer button {
+  width:100%; margin-top:8px; padding:8px;
+  background:#FD5A1E; color:#fff; border:none; border-radius:6px;
+}
 
 #container {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  padding:10px;
-  overflow:hidden;
+  flex:1; display:flex; flex-direction:column; padding:10px;
 }
-#chat { flex:1; overflow-y:auto; padding:10px; border-radius:12px; border:1px solid #ccc; background:#fafafa; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05); transition:0.3s; }
+
+#chat {
+  flex:1; overflow-y:auto; background:#fafafa;
+  border:1px solid #ccc; border-radius:10px;
+  padding:10px; margin-bottom:10px;
+}
 .dark #chat { background:#1e1e1e; border-color:#333; }
 
-.message { margin:10px 0; padding:12px 16px; border-radius:20px; max-width:75%; word-wrap: break-word; box-shadow:0 1px 3px rgba(0,0,0,0.1); transition:0.2s; }
-.user { background:#FD5A1E; color:#fff; margin-left:auto; text-align:right; }
-.assistant { background:#fff; color:#333; margin-right:auto; }
-.dark .assistant { background:#2a2a2a; color:#eee; }
-.meta { font-size:10px; color:#666; margin-top:4px; }
+.message { margin:8px 0; padding:10px 14px; border-radius:18px; max-width:75%; }
+.user { background:#FD5A1E; color:white; margin-left:auto; }
+.assistant { background:white; color:black; }
+.dark .assistant { background:#333; color:white; }
 
-textarea, input, select, button { width:100%; max-width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:5px; }
-button.action { background:#FD5A1E; color:#fff; border:none; border-radius:8px; padding:10px 16px; margin-top:5px; cursor:pointer; transition:0.2s; }
+textarea, input, select {
+  width:100%; padding:10px; border-radius:8px; margin-top:5px; border:1px solid #ccc;
+}
+button.action { background:#FD5A1E; color:white; border:none; padding:10px; border-radius:8px; margin-top:5px; cursor:pointer; width:48%; }
 button.action:hover { background:#e04f1a; }
 
-img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer; border:2px solid #FD5A1E; border-radius:6px; }
-#modalOverlay { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); justify-content:center; align-items:flex-start; padding-top:60px; z-index:999; }
-#modalOverlay img { max-width:90vw; max-height:90vh; border-radius:8px; }
-
-#historyBackdrop { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); backdrop-filter:blur(4px); z-index:1001; opacity:0; pointer-events:none; transition:opacity 0.3s ease-in-out; }
-#historyBackdrop.open { opacity:1; pointer-events:auto; }
+#btnRow { display:flex; gap:4%; flex-wrap:wrap; }
 
 @media(max-width:768px){
+  #btnRow button { width:48%; }
   #main { flex-direction:column; }
-  #historyDrawer { width:100%; max-height:50vh; border-right:none; border-bottom:1px solid #FD5A1E; }
-  button.action { width:48%; }
-  button.action + button.action { margin-left:4%; }
+  #historyDrawer { width:100%; max-height:50vh; border-right:none; border-bottom:2px solid #FD5A1E; }
 }
 </style>
 </head>
 <body>
-<div id="headerImg" class="dark">
-  <img src="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png" alt="Giants Logo">
+
+<div id="headerImg">
+  <img src="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png" alt="Logo" />
   <span>⚾ Giants GPT</span>
 </div>
+
+<div id="historyToggleWrap"><button onclick="toggleHistory()">History</button></div>
 
 <div id="main">
   <div id="historyDrawer" class="dark">
@@ -87,191 +104,179 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
     <ul id="historyList"></ul>
     <button onclick="newChat()">New Chat</button>
   </div>
-  <div id="container">
-    <label>API Key:
-      <input type="password" id="apiKey" placeholder="Enter your OpenAI key">
-    </label>
-    <button onclick="clearKey()">Clear API Key</button>
 
-    <label>Current Chat Name:
-      <input type="text" id="currentChatName" placeholder="Chat Name">
-    </label>
+  <div id="container">
+    <label>API Key: <input type="password" id="apiKey" placeholder="Your OpenAI API key"></label>
+    <label>Current Chat Name: <input type="text" id="currentChatName" placeholder="Chat title..."></label>
 
     <label>Model:
       <select id="modelSelect">
-        <option value="gpt-5">GPT-5 (Recommended)</option>
+        <option value="gpt-5">GPT-5</option>
         <option value="gpt-4o">GPT-4o</option>
-        <option value="gpt-4o-mini">GPT-4o-mini</option>
-        <option value="gpt-3.5-turbo">GPT-3.5-turbo</option>
+        <option value="gpt-3.5-turbo">GPT-3.5</option>
       </select>
     </label>
 
     <label>Image Size:
       <select id="imageSizeSelect">
-        <option value="256x256">256x256</option>
-        <option value="512x512" selected>512x512</option>
-        <option value="1024x1024">1024x1024</option>
+        <option>256x256</option>
+        <option selected>512x512</option>
+        <option>1024x1024</option>
       </select>
     </label>
 
     <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
 
-    <label>Upload Document (TXT):
-      <input type="file" id="fileInput" accept=".txt">
-    </label>
-
     <div id="chat"></div>
-    <div id="typing" style="display:none;">GPT is typing...</div>
 
-    <textarea id="userInput" placeholder="Type your message..."></textarea>
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="action" id="sendButton">Send</button>
-      <button class="action" id="generateButton">Generate Image</button>
+    <textarea id="userInput" placeholder="Type here..."></textarea>
+    <div id="btnRow">
+      <button class="action" id="sendBtn">Send</button>
+      <button class="action" id="imageBtn">Generate Image</button>
     </div>
   </div>
 </div>
 
-<div id="modalOverlay" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
-<div id="historyBackdrop" onclick="closeHistory()"></div>
-
 <script>
-// Elements
 const apiKeyInput = document.getElementById("apiKey");
 const modelSelect = document.getElementById("modelSelect");
 const chatDiv = document.getElementById("chat");
 const userInput = document.getElementById("userInput");
-const typingDiv = document.getElementById("typing");
 const darkToggle = document.getElementById("darkToggle");
 const historyList = document.getElementById("historyList");
-const modalOverlay = document.getElementById("modalOverlay");
-const modalImg = document.getElementById("modalImg");
-const fileInput = document.getElementById("fileInput");
 const imageSizeSelect = document.getElementById("imageSizeSelect");
-const sendButton = document.getElementById("sendButton");
-const generateButton = document.getElementById("generateButton");
+const sendBtn = document.getElementById("sendBtn");
+const imageBtn = document.getElementById("imageBtn");
 const currentChatNameInput = document.getElementById("currentChatName");
 const historyDrawer = document.getElementById("historyDrawer");
-const historyBackdrop = document.getElementById("historyBackdrop");
 
-const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o-mini':0.0015, 'gpt-4o':0.003, 'gpt-5':0.005 };
+const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o':0.003, 'gpt-5':0.005 }
+
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
 let currentChat = [];
 let currentChatName = "";
 
-// Settings
-function saveSettings(){ localStorage.setItem("apiKey", apiKeyInput.value); localStorage.setItem("model", modelSelect.value); localStorage.setItem("dark", darkToggle.checked?"true":"false"); }
-function loadSettings(){ 
-  apiKeyInput.value = localStorage.getItem("apiKey")||""; 
-  modelSelect.value = localStorage.getItem("model")||"gpt-5"; 
-  if(localStorage.getItem("dark")==="true"){ darkToggle.checked=true; document.body.classList.add("dark"); historyDrawer.classList.add('dark'); } 
-  renderHistory(); 
+function toggleHistory() { historyDrawer.classList.toggle("open"); }
+
+function addMsg(role,text,isImage=false,imgUrl=""){
+  const div=document.createElement("div");
+  div.className="message "+(role==="user"?"user":"assistant");
+  if(isImage){
+    const img=document.createElement("img");
+    img.src=imgUrl; img.style.maxWidth="100%"; img.style.borderRadius="6px";
+    div.appendChild(img);
+  } else { div.innerHTML=text.replace(/\n/g,"<br>"); }
+  chatDiv.appendChild(div);
+  chatDiv.scrollTop=chatDiv.scrollHeight;
+  currentChat.push({role,text,isImage,imgUrl});
 }
-loadSettings();
-apiKeyInput.onchange = saveSettings; modelSelect.onchange = saveSettings;
-darkToggle.onchange = ()=>{ document.body.classList.toggle("dark"); historyDrawer.classList.toggle('dark'); saveSettings(); };
 
-// Current chat name
-currentChatNameInput.addEventListener("input",()=>{ currentChatName = currentChatNameInput.value; });
+function sendMessage(){
+  const key = apiKeyInput.value.trim();
+  const content = userInput.value.trim();
+  if(!key||!content) return;
 
-// File upload
-fileInput.addEventListener("change", (event)=>{
-  const file = event.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    const text = e.target.result;
-    userInput.value += "\n\n[File Content Start]\n" + text + "\n[File Content End]\n";
-  };
-  reader.readAsText(file);
-});
+  addMsg("user",content);
+  userInput.value="";
 
-// Messages
-function addMsg(role,text,meta="",isImage=false,imgUrl=""){
-  const div = document.createElement("div");
-  div.className = "message "+(role==="user"?"user":"assistant");
-  if(isImage){ const img = document.createElement("img"); img.src = imgUrl; img.className="thumb"; img.onclick=()=>{ modalImg.src=imgUrl; modalOverlay.style.display="flex"; }; div.appendChild(img); } 
-  else { div.innerHTML = text.replace(/\n/g,"<br>"); }
-  if(meta){ const span=document.createElement("div"); span.className="meta"; span.textContent=meta; div.appendChild(span); }
-  chatDiv.appendChild(div); chatDiv.scrollTop = chatDiv.scrollHeight;
-  currentChat.push({role,text,meta,isImage,imgUrl}); saveCurrentChat();
+  fetch("https://api.openai.com/v1/chat/completions",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json","Authorization":"Bearer "+key},
+    body:JSON.stringify({
+      model:modelSelect.value,
+      messages:[{role:"user",content}]
+    })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.error) {
+      addMsg("assistant","Error: "+data.error.message);
+      return;
+    }
+    const reply = data.choices[0]?.message?.content;
+    addMsg("assistant",reply || "(no response)");
+  })
+  .catch(err=> addMsg("assistant","Error: "+err.message));
 }
-function saveCurrentChat(){ localStorage.setItem("currentChat",JSON.stringify(currentChat)); }
 
-// Chat history
-function saveChatToHistory(){ 
-  if(currentChat.length===0) return; 
-  if(!currentChatName){ 
-    let firstMsg = currentChat.find(m=>m.role==="user")?.text||"Chat"; 
-    currentChatName = firstMsg.length>20?firstMsg.slice(0,20)+"...":firstMsg; 
-  }
-  currentChatNameInput.value = currentChatName;
-  chatHistory.push({name: currentChatName,messages:currentChat}); 
-  localStorage.setItem("chatHistory",JSON.stringify(chatHistory)); 
-  renderHistory(); 
+function generateImage(){
+  const key=apiKeyInput.value.trim();
+  const prompt=userInput.value.trim();
+  if(!key||!prompt) return;
+
+  addMsg("user",prompt);
+  userInput.value="";
+
+  fetch("https://api.openai.com/v1/images/generations",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json","Authorization":"Bearer "+key},
+    body:JSON.stringify({
+      model:"gpt-image-1",
+      prompt:prompt,
+      n:1,
+      size:imageSizeSelect.value
+    })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(!data.data || !data.data[0]) {
+      addMsg("assistant","Image generation error");
+      return;
+    }
+    const url=data.data[0].url;
+    addMsg("assistant","",true,url);
+  })
+  .catch(err=> addMsg("assistant","Error: "+err.message));
 }
+
 function renderHistory(){
   historyList.innerHTML="";
   chatHistory.forEach((chat,index)=>{
     const li=document.createElement("li");
     li.textContent=chat.name;
-
     li.onclick=()=>{
-      currentChat=chat.messages; currentChatName=chat.name; currentChatNameInput.value=currentChatName; chatDiv.innerHTML="";
-      currentChat.forEach(m=>addMsg(m.role,m.text,m.meta,m.isImage,m.imgUrl));
-      closeHistory();
-    };
-
-    li.ondblclick=()=>{
-      const newName=prompt("Rename chat:",chat.name);
-      if(newName){ chatHistory[index].name=newName; localStorage.setItem("chatHistory",JSON.stringify(chatHistory)); renderHistory(); }
+      currentChat=chat.messages;
+      currentChatName=chat.name;
+      currentChatNameInput.value=currentChatName;
+      chatDiv.innerHTML="";
+      currentChat.forEach(m=> addMsg(m.role,m.text,m.isImage,m.imgUrl));
+      historyDrawer.classList.remove("open");
     };
     historyList.appendChild(li);
   });
 }
-function newChat(){ if(currentChat.length>0) saveChatToHistory(); chatDiv.innerHTML=""; currentChat=[]; currentChatName=""; currentChatNameInput.value=""; }
 
-// History drawer
-function toggleHistory(){ historyDrawer.classList.toggle("open"); historyBackdrop.classList.toggle("open"); }
-function closeHistory(){ historyDrawer.classList.remove("open"); historyBackdrop.classList.remove("open"); }
-
-// GPT API
-async function sendMessage(){
-  const key = apiKeyInput.value.trim(); const content = userInput.value.trim(); const model = modelSelect.value; if(!key||!content) return;
-  addMsg("user",content); userInput.value=""; typingDiv.style.display="block";
-  try{
-    const res = await fetch("https://api.openai.com/v1/chat/completions",{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+key }, body: JSON.stringify({model,messages:[{role:"user",content}]})});
-    const data = await res.json(); typingDiv.style.display="none";
-    if(data.error){ addMsg("assistant","Error: "+data.error.message); return; }
-    const reply = data.choices[0]?.message?.content || "No response";
-    const tok = data.usage?.total_tokens || 0; 
-    const cost = (tok/1000*costPerThousandTokens[model]).toFixed(5);
-    addMsg("assistant",reply,`Tokens: ${tok} | Cost: $${cost}`);
-  } catch(err){ typingDiv.style.display="none"; addMsg("assistant","Error: "+err.message); }
+function newChat(){
+  if(currentChat.length>0){
+    if(!currentChatName){
+      currentChatName = currentChat[0].text.slice(0,20)+"...";
+    }
+    chatHistory.push({name: currentChatName, messages: currentChat});
+    localStorage.setItem("chatHistory",JSON.stringify(chatHistory));
+    renderHistory();
+  }
+  chatDiv.innerHTML="";
+  currentChat=[];
+  currentChatName="";
+  currentChatNameInput.value="";
 }
 
-// Image generation
-async function generateImage() {
-  const key = apiKeyInput.value.trim(); const prompt = userInput.value.trim(); const size = imageSizeSelect.value; if (!key || !prompt) return;
-  addMsg("user", prompt); userInput.value = ""; typingDiv.style.display = "block";
-  try {
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
-      body: JSON.stringify({ model: "gpt-image-1", prompt: prompt, n: 1, size: size })
-    });
-    const data = await res.json(); typingDiv.style.display="none";
-    if(data.error){ addMsg("assistant","Error: "+data.error.message); return; }
-    if(!data.data || !data.data[0]?.url){ addMsg("assistant","Error: No image returned"); return; }
-    const imgUrl = data.data[0].url;
-    addMsg("assistant","",`Image generated`,true,imgUrl);
-  } catch(err){ typingDiv.style.display="none"; addMsg("assistant","Error: "+err.message); }
-}
+// Save chat name as user edits
+currentChatNameInput.addEventListener("input",()=>{
+  currentChatName=currentChatNameInput.value;
+});
 
-// Buttons
-sendButton.onclick = ()=>sendMessage();
-generateButton.onclick = ()=>generateImage();
-userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendButton.click(); }});
-function clearKey(){ apiKeyInput.value=""; saveSettings(); }
+// Theme & Settings
+darkToggle.addEventListener("change",()=>{
+  document.body.classList.toggle("dark");
+  historyDrawer.classList.toggle("dark");
+});
+
+window.onload = ()=> renderHistory();
+
+sendBtn.onclick = sendMessage;
+imageBtn.onclick = generateImage;
+userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }});
 </script>
 </body>
 </html>
