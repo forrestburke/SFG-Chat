@@ -26,20 +26,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#3
 #headerImg img { height:40px; vertical-align: middle; margin-right:10px; }
 #headerImg span { vertical-align:middle; font-weight:bold; }
 
-#mainWrapper {
-  display:flex;
-  justify-content:center;
-  width:100%;
-}
-
-#main {
-  display:flex;
-  max-width: 1000px;
-  width:100%;
-  flex-direction:row;
-  padding:10px;
-  gap:10px;
-}
+#mainWrapper { display:flex; justify-content:center; width:100%; }
+#main { display:flex; max-width:1000px; width:100%; flex-direction:row; padding:10px; gap:10px; }
 
 #historyDrawer {
   width:260px;
@@ -61,17 +49,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#3
 #historyDrawer li:hover { background:#FD5A1E; color:#fff; }
 #historyDrawer button { width:100%; margin-top:8px; padding:8px; background:#FD5A1E; color:#fff; border:none; border-radius:6px; cursor:pointer; }
 
-#container {
-  flex:1;
-  display:flex; flex-direction:column; padding:10px;
-}
-
-#chat {
-  flex:1; overflow-y:auto; background:#fafafa;
-  border:1px solid #ccc; border-radius:10px;
-  padding:10px; margin-bottom:10px;
-  position:relative;
-}
+#container { flex:1; display:flex; flex-direction:column; padding:10px; }
+#chat { flex:1; overflow-y:auto; background:#fafafa; border:1px solid #ccc; border-radius:10px; padding:10px; margin-bottom:10px; position:relative; }
 .dark #chat { background:#1e1e1e; border-color:#333; }
 
 .message { margin:8px 0; padding:10px 14px; border-radius:18px; max-width:75%; word-wrap: break-word; }
@@ -81,12 +60,9 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f5f5f5; color:#3
 
 #typingIndicator { font-style:italic; color:#FD5A1E; margin:5px 0; display:none; }
 
-textarea, input, select {
-  width:100%; padding:10px; border-radius:8px; margin-top:5px; border:1px solid #ccc;
-}
+textarea, input, select { width:100%; padding:10px; border-radius:8px; margin-top:5px; border:1px solid #ccc; }
 button.action { background:#FD5A1E; color:white; border:none; padding:10px; border-radius:8px; margin-top:5px; cursor:pointer; width:48%; }
 button.action:hover { background:#e04f1a; }
-
 #btnRow { display:flex; gap:4%; flex-wrap:wrap; margin-bottom:5px; }
 
 #exportBtn { background:#FD5A1E; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; margin-bottom:5px; width:100%; }
@@ -108,11 +84,19 @@ button.action:hover { background:#e04f1a; }
   box-shadow:2px 2px 8px rgba(0,0,0,0.3);
 }
 
-#imageLoader {
+#imageSpinner {
   display:none;
-  text-align:center;
-  margin:10px 0;
+  width:30px;
+  height:30px;
+  border:4px solid #f3f3f3;
+  border-top:4px solid #FD5A1E;
+  border-radius:50%;
+  animation: spin 1s linear infinite;
+  position:absolute;
+  right:10px;
+  top:10px;
 }
+@keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
 
 @media(max-width:768px){
   #main { flex-direction:column; }
@@ -145,7 +129,6 @@ button.action:hover { background:#e04f1a; }
           <option value="gpt-3.5-turbo">GPT-3.5</option>
         </select>
       </label>
-
       <label>Image Size:
         <select id="imageSizeSelect">
           <option>256x256</option>
@@ -153,15 +136,13 @@ button.action:hover { background:#e04f1a; }
           <option selected>1024x1024</option>
         </select>
       </label>
-
       <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
 
       <div id="chat"></div>
       <div id="typingIndicator">GPT is thinking...</div>
-      <div id="imageLoader">Generating image...</div>
+      <div id="imageSpinner"></div>
 
       <button id="exportBtn">Export Chat</button>
-
       <textarea id="userInput" placeholder="Type here..."></textarea>
       <div id="btnRow">
         <button class="action" id="sendBtn">Send</button>
@@ -188,10 +169,10 @@ const currentChatNameInput = document.getElementById("currentChatName");
 const historyDrawer = document.getElementById("historyDrawer");
 const typingIndicator = document.getElementById("typingIndicator");
 const exportBtn = document.getElementById("exportBtn");
+const imageSpinner = document.getElementById("imageSpinner");
 const tokenCostDiv = document.getElementById("tokenCost");
-const imageLoader = document.getElementById("imageLoader");
 
-const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o':0.003, 'gpt-5':0.005 };
+const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o':0.003, 'gpt-5':0.005 }
 
 let chatHistory = JSON.parse(localStorage.getItem("chatHistory")||"[]");
 let currentChat = [];
@@ -205,25 +186,19 @@ function addMsg(role,text,isImage=false,imgUrl=""){
   div.className="message "+(role==="user"?"user":"assistant");
   if(isImage){
     const img=document.createElement("img");
-    img.src=imgUrl; 
-    img.style.maxWidth="100%"; 
-    img.style.borderRadius="6px";
-    img.style.opacity=0;
+    img.src=imgUrl; img.style.maxWidth="100%"; img.style.borderRadius="6px"; img.style.opacity=0;
     div.appendChild(img);
     chatDiv.appendChild(div);
     chatDiv.scrollTop=chatDiv.scrollHeight;
-
-    let op=0;
-    const fadeIn=setInterval(()=>{
-      op+=0.05;
-      img.style.opacity=op;
-      if(op>=1) clearInterval(fadeIn);
-    },30);
-
+    let opacity = 0;
+    const fade = setInterval(()=>{
+      opacity += 0.05;
+      img.style.opacity = opacity;
+      if(opacity>=1) clearInterval(fade);
+    },50);
   } else { div.innerHTML=text.replace(/\n/g,"<br>"); chatDiv.appendChild(div); }
   chatDiv.scrollTop=chatDiv.scrollHeight;
-  if(!isImage) currentChat.push({role,text,isImage,imgUrl});
-  else currentChat.push({role,text,isImage,imgUrl});
+  currentChat.push({role,text,isImage,imgUrl});
 }
 
 function updateTokenCost(tokensUsed){
@@ -235,26 +210,23 @@ function updateTokenCost(tokensUsed){
 async function sendMessage(){
   const content = userInput.value.trim();
   if(!content) return;
-
   addMsg("user",content);
   userInput.value="";
   typingIndicator.style.display="block";
 
   try {
-    const res = await fetch("/api/chat", {
+    const res = await fetch("/chat",{
       method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({
-        model: modelSelect.value,
-        messages: [{role: "user", content}]
-      })
+      headers:{ "Content-Type":"application/json"},
+      body:JSON.stringify({ message: content, model: modelSelect.value })
     });
     const data = await res.json();
     typingIndicator.style.display="none";
-    if (data.error) { addMsg("assistant","Error: "+data.error.message); return; }
-    const reply = data.choices[0]?.message?.content;
-    addMsg("assistant",reply || "(no response)");
-    updateTokenCost(data.usage?.total_tokens || 0);
+    if(data.error) addMsg("assistant","Error: "+data.error);
+    else{
+      addMsg("assistant",data.reply);
+      updateTokenCost(data.usage?.total_tokens||0);
+    }
   } catch(err){
     typingIndicator.style.display="none";
     addMsg("assistant","Error: "+err.message);
@@ -262,31 +234,25 @@ async function sendMessage(){
 }
 
 async function generateImage(){
-  const prompt = userInput.value.trim();
-  const size = imageSizeSelect.value;
+  const prompt=userInput.value.trim();
   if(!prompt) return;
-
   addMsg("user",prompt);
   userInput.value="";
-  imageLoader.style.display="block";
+  imageSpinner.style.display="block";
 
   try {
-    const res = await fetch("/api/image", {
+    const res = await fetch("/image",{
       method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ prompt, size })
+      headers:{ "Content-Type":"application/json"},
+      body:JSON.stringify({ prompt, size: imageSizeSelect.value })
     });
     const data = await res.json();
-    imageLoader.style.display="none";
+    imageSpinner.style.display="none";
 
-    if(!data || !data.data || !data.data[0] || !data.data[0].url){
-      addMsg("assistant","Image generation error: No image returned.");
-      return;
-    }
-    addMsg("assistant","",true,data.data[0].url);
-
+    if(data.error) addMsg("assistant","Image generation error: "+data.error);
+    else addMsg("assistant","",true,data.imageUrl);
   } catch(err){
-    imageLoader.style.display="none";
+    imageSpinner.style.display="none";
     addMsg("assistant","Error: "+err.message);
   }
 }
@@ -310,7 +276,7 @@ function renderHistory(){
 
 function newChat(){
   if(currentChat.length>0){
-    if(!currentChatName){ currentChatName = currentChat[0].text.slice(0,20)+"..."; }
+    if(!currentChatName) currentChatName = currentChat[0].text.slice(0,20)+"...";
     chatHistory.push({name: currentChatName, messages: currentChat});
     localStorage.setItem("chatHistory",JSON.stringify(chatHistory));
     renderHistory();
@@ -344,11 +310,6 @@ exportBtn.addEventListener("click",()=>{
 });
 
 window.onload = ()=> renderHistory();
-
 sendBtn.onclick = sendMessage;
 imageBtn.onclick = generateImage;
-userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }});
-</script>
-
-</body>
-</html>
+userInput.addEventListener("keydown",(
