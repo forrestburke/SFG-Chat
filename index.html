@@ -108,6 +108,13 @@ button.action:hover { background:#e04f1a; }
   box-shadow:2px 2px 8px rgba(0,0,0,0.3);
 }
 
+#imageProgressContainer {
+  width:100%; height:8px; background:#ddd; border-radius:4px; margin-bottom:5px; display:none;
+}
+#imageProgressBar {
+  width:0%; height:100%; background:#FD5A1E; border-radius:4px;
+}
+
 @media(max-width:768px){
   #main { flex-direction:column; }
   #historyDrawer { position:absolute; top:70px; left:0; width:80vw; height:calc(100% - 80px); transform: translateX(-100%); z-index:10; transition: transform 0.3s ease-in-out; }
@@ -155,6 +162,7 @@ button.action:hover { background:#e04f1a; }
       <div id="chat"></div>
       <div id="typingIndicator">GPT is thinking...</div>
 
+      <div id="imageProgressContainer"><div id="imageProgressBar"></div></div>
       <button id="exportBtn">Export Chat</button>
 
       <textarea id="userInput" placeholder="Type here..."></textarea>
@@ -185,6 +193,8 @@ const historyDrawer = document.getElementById("historyDrawer");
 const typingIndicator = document.getElementById("typingIndicator");
 const exportBtn = document.getElementById("exportBtn");
 const tokenCostDiv = document.getElementById("tokenCost");
+const imageProgressContainer = document.getElementById("imageProgressContainer");
+const imageProgressBar = document.getElementById("imageProgressBar");
 
 const costPerThousandTokens = { 'gpt-3.5-turbo':0.0004, 'gpt-4o':0.003, 'gpt-5':0.005 }
 
@@ -200,27 +210,23 @@ function addMsg(role,text,isImage=false,imgUrl=""){
   div.className="message "+(role==="user"?"user":"assistant");
   if(isImage){
     const img=document.createElement("img");
-    img.src=imgUrl; img.style.maxWidth="100%"; img.style.borderRadius="6px"; img.style.opacity=0;
+    img.src=imgUrl; img.style.maxWidth="100%"; img.style.borderRadius="6px";
+    img.style.opacity = 0;
     div.appendChild(img);
     chatDiv.appendChild(div);
     chatDiv.scrollTop=chatDiv.scrollHeight;
-    currentChat.push({role,text,isImage,imgUrl});
-    fadeIn(img);
-  } else {
-    div.innerHTML=text.replace(/\n/g,"<br>");
-    chatDiv.appendChild(div);
-    chatDiv.scrollTop=chatDiv.scrollHeight;
-    currentChat.push({role,text,isImage,imgUrl});
-  }
-}
 
-function fadeIn(img){
-  let op=0;
-  const timer=setInterval(()=>{
-    op+=0.02;
-    img.style.opacity=op;
-    if(op>=1) clearInterval(timer);
-  },16);
+    // fade-in effect
+    let opacity = 0;
+    const fadeInterval = setInterval(()=>{
+      opacity += 0.05;
+      img.style.opacity = opacity;
+      if(opacity>=1) clearInterval(fadeInterval);
+    },30);
+  } else { div.innerHTML=text.replace(/\n/g,"<br>"); chatDiv.appendChild(div); }
+  chatDiv.scrollTop=chatDiv.scrollHeight;
+  if(!isImage) currentChat.push({role,text,isImage,imgUrl});
+  else currentChat.push({role,text,isImage,imgUrl});
 }
 
 function updateTokenCost(tokensUsed){
@@ -230,7 +236,7 @@ function updateTokenCost(tokensUsed){
 }
 
 async function sendMessage(){
-  let key = apiKeyInput.value.trim().replace(/[^\x20-\x7E]/g,"");
+  const key = apiKeyInput.value.trim();
   const content = userInput.value.trim();
   if(!key||!content) return;
 
@@ -260,13 +266,15 @@ async function sendMessage(){
 }
 
 async function generateImage(){
-  let key = apiKeyInput.value.trim().replace(/[^\x20-\x7E]/g,"");
-  const prompt=userInput.value.trim();
+  const key = apiKeyInput.value.trim();
+  const prompt = userInput.value.trim();
   if(!key||!prompt) return;
 
   addMsg("user",prompt);
   userInput.value="";
   typingIndicator.style.display="block";
+  imageProgressContainer.style.display="block";
+  imageProgressBar.style.width="0%";
 
   try {
     const res = await fetch("https://api.openai.com/v1/images/generations",{
@@ -279,19 +287,38 @@ async function generateImage(){
         size:imageSizeSelect.value
       })
     });
-
     const data = await res.json();
     typingIndicator.style.display="none";
 
-    if(!data?.data?.[0]?.url){
+    if(!data || !data.data || !data.data[0] || !data.data[0].url){
+      imageProgressContainer.style.display="none";
       addMsg("assistant","Image generation error: No image returned. Check API key or usage limits.");
       return;
     }
-    const url=data.data[0].url;
-    addMsg("assistant","",true,url);
+
+    // Fetch image as blob for real progress
+    const imageUrl = data.data[0].url;
+    const imgRes = await fetch(imageUrl);
+    const reader = imgRes.body.getReader();
+    const contentLength = +imgRes.headers.get('Content-Length');
+    let receivedLength = 0;
+    let chunks = [];
+    while(true){
+      const {done,value} = await reader.read();
+      if(done) break;
+      chunks.push(value);
+      receivedLength += value.length;
+      if(contentLength) imageProgressBar.style.width = ((receivedLength/contentLength)*100).toFixed(2)+"%";
+    }
+    const blob = new Blob(chunks);
+    const finalUrl = URL.createObjectURL(blob);
+    addMsg("assistant","",true,finalUrl);
+
+    imageProgressContainer.style.display="none";
 
   } catch(err){
     typingIndicator.style.display="none";
+    imageProgressContainer.style.display="none";
     addMsg("assistant","Error: "+err.message);
   }
 }
