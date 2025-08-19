@@ -3,65 +3,62 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
-import path from "path";
-import { fileURLToPath } from "url";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
-app.use(cors());           // Enable CORS
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // Serve your HTML/CSS/JS
+const port = process.env.PORT || 3000;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: "10mb" }));
+
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // Chat endpoint
 app.post("/chat", async (req, res) => {
-  try {
-    const { messages, model } = req.body;
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: "Invalid messages array" });
-    }
+  const { message, model } = req.body;
+  if (!message) return res.status(400).json({ error: "No message provided" });
 
+  try {
     const response = await openai.chat.completions.create({
       model: model || "gpt-5",
-      messages
+      messages: [{ role: "user", content: message }],
     });
 
-    res.json(response);
+    const reply = response.choices[0].message.content;
+    res.json({ reply, usage: response.usage });
   } catch (err) {
-    console.error("Chat error:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
 // Image generation endpoint
 app.post("/image", async (req, res) => {
-  try {
-    const { prompt, size } = req.body;
-    if (!prompt) return res.status(400).json({ error: "Prompt is required" });
+  const { prompt, size } = req.body;
+  if (!prompt) return res.status(400).json({ error: "No prompt provided" });
 
+  try {
     const response = await openai.images.generate({
       model: "gpt-image-1",
       prompt,
       size: size || "1024x1024",
-      n: 1
+      n: 1,
     });
 
-    if (!response.data || !response.data[0] || !response.data[0].url) {
-      return res.status(500).json({ error: "No image returned from OpenAI" });
-    }
-
-    res.json({ url: response.data[0].url });
+    const imageUrl = response.data[0].url;
+    res.json({ imageUrl });
   } catch (err) {
-    console.error("Image generation error:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
 // Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+app.listen(port, () => {
+  console.log(`Giants GPT server running at http://localhost:${port}`);
+});
