@@ -16,23 +16,11 @@
 body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f5f5f5; color:#333; transition: all 0.3s; }
 .dark { background:#121212; color:#eee; }
 
-header {
-  padding:12px 20px;
-  background:#000;
-  color:#fff;
-  font-size:20px;
-  text-align:center;
-  position:sticky;
-  top:0;
-  z-index:1003;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  box-shadow:0 2px 5px rgba(0,0,0,0.2);
-}
-header button { background:#FD5A1E; border:none; color:#fff; padding:6px 10px; border-radius:6px; cursor:pointer; }
+#headerImg { padding:12px 20px; background:#000; color:#fff; font-size:20px; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); border-radius:8px; margin:10px; }
+#headerImg img { height:40px; vertical-align:middle; margin-right:10px; }
+#headerImg span { vertical-align:middle; font-weight:bold; font-size:1.2em; }
 
-#main { display:flex; flex-direction:row; height:calc(100vh - 52px); overflow:hidden; }
+#main { display:flex; flex-direction:row; height:calc(100vh - 70px); overflow:hidden; margin-top:10px; }
 #historyDrawer {
   width:260px; max-width:80vw;
   background:#fff;
@@ -42,6 +30,7 @@ header button { background:#FD5A1E; border:none; color:#fff; padding:6px 10px; b
   overflow-y:auto; padding:20px; z-index:1002;
   border-right:1px solid #FD5A1E;
   position:relative;
+  border-radius:8px;
 }
 #historyDrawer.dark { background:#1e1e1e; color:#eee; }
 #historyDrawer h3 { margin-bottom:10px; color:#FD5A1E; }
@@ -87,10 +76,10 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
 </style>
 </head>
 <body>
-<header>
+<div id="headerImg" class="dark">
+  <img src="https://i.pinimg.com/originals/0e/68/ed/0e68eda6243faa5f754b1cfb2b04846d.png" alt="Giants Logo">
   <span>⚾ Giants GPT</span>
-  <button onclick="toggleHistory()">History</button>
-</header>
+</div>
 
 <div id="main">
   <div id="historyDrawer" class="dark">
@@ -103,6 +92,10 @@ img.thumb { width:auto; max-width:100%; height:auto; margin:5px; cursor:pointer;
       <input type="password" id="apiKey" placeholder="Enter your OpenAI key">
     </label>
     <button onclick="clearKey()">Clear API Key</button>
+
+    <label>Current Chat Name:
+      <input type="text" id="currentChatName" placeholder="Chat Name">
+    </label>
 
     <label>Model:
       <select id="modelSelect">
@@ -156,6 +149,7 @@ const fileInput = document.getElementById("fileInput");
 const imageSizeSelect = document.getElementById("imageSizeSelect");
 const sendButton = document.getElementById("sendButton");
 const generateButton = document.getElementById("generateButton");
+const currentChatNameInput = document.getElementById("currentChatName");
 const historyDrawer = document.getElementById("historyDrawer");
 const historyBackdrop = document.getElementById("historyBackdrop");
 
@@ -166,10 +160,18 @@ let currentChatName = "";
 
 // Settings
 function saveSettings(){ localStorage.setItem("apiKey", apiKeyInput.value); localStorage.setItem("model", modelSelect.value); localStorage.setItem("dark", darkToggle.checked?"true":"false"); }
-function loadSettings(){ apiKeyInput.value = localStorage.getItem("apiKey")||""; modelSelect.value = localStorage.getItem("model")||"gpt-5"; if(localStorage.getItem("dark")==="true"){ darkToggle.checked=true; document.body.classList.add("dark"); historyDrawer.classList.add('dark'); } renderHistory(); }
+function loadSettings(){ 
+  apiKeyInput.value = localStorage.getItem("apiKey")||""; 
+  modelSelect.value = localStorage.getItem("model")||"gpt-5"; 
+  if(localStorage.getItem("dark")==="true"){ darkToggle.checked=true; document.body.classList.add("dark"); historyDrawer.classList.add('dark'); } 
+  renderHistory(); 
+}
 loadSettings();
 apiKeyInput.onchange = saveSettings; modelSelect.onchange = saveSettings;
 darkToggle.onchange = ()=>{ document.body.classList.toggle("dark"); historyDrawer.classList.toggle('dark'); saveSettings(); };
+
+// Current chat name
+currentChatNameInput.addEventListener("input",()=>{ currentChatName = currentChatNameInput.value; });
 
 // File upload
 fileInput.addEventListener("change", (event)=>{
@@ -196,7 +198,17 @@ function addMsg(role,text,meta="",isImage=false,imgUrl=""){
 function saveCurrentChat(){ localStorage.setItem("currentChat",JSON.stringify(currentChat)); }
 
 // Chat history
-function saveChatToHistory(){ if(currentChat.length===0) return; let firstMsg = currentChat.find(m=>m.role==="user")?.text||"Chat"; currentChatName = firstMsg.length>20?firstMsg.slice(0,20)+"...":firstMsg; chatHistory.push({name: currentChatName,messages: currentChat}); localStorage.setItem("chatHistory",JSON.stringify(chatHistory)); renderHistory(); }
+function saveChatToHistory(){ 
+  if(currentChat.length===0) return; 
+  if(!currentChatName){ 
+    let firstMsg = currentChat.find(m=>m.role==="user")?.text||"Chat"; 
+    currentChatName = firstMsg.length>20?firstMsg.slice(0,20)+"...":firstMsg; 
+  }
+  currentChatNameInput.value = currentChatName;
+  chatHistory.push({name: currentChatName,messages:currentChat}); 
+  localStorage.setItem("chatHistory",JSON.stringify(chatHistory)); 
+  renderHistory(); 
+}
 function renderHistory(){
   historyList.innerHTML="";
   chatHistory.forEach((chat,index)=>{
@@ -204,7 +216,7 @@ function renderHistory(){
     li.textContent=chat.name;
 
     li.onclick=()=>{
-      currentChat=chat.messages; currentChatName=chat.name; chatDiv.innerHTML="";
+      currentChat=chat.messages; currentChatName=chat.name; currentChatNameInput.value=currentChatName; chatDiv.innerHTML="";
       currentChat.forEach(m=>addMsg(m.role,m.text,m.meta,m.isImage,m.imgUrl));
       closeHistory();
     };
@@ -216,7 +228,7 @@ function renderHistory(){
     historyList.appendChild(li);
   });
 }
-function newChat(){ if(currentChat.length>0) saveChatToHistory(); chatDiv.innerHTML=""; currentChat=[]; currentChatName=""; }
+function newChat(){ if(currentChat.length>0) saveChatToHistory(); chatDiv.innerHTML=""; currentChat=[]; currentChatName=""; currentChatNameInput.value=""; }
 
 // History drawer
 function toggleHistory(){ historyDrawer.classList.toggle("open"); historyBackdrop.classList.toggle("open"); }
