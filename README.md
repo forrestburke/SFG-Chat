@@ -1,50 +1,46 @@
-# ⚾ Giants GPT Chat (Personal OpenAI Wrapper)
+# Giants GPT
 
-A lightweight Giants-themed chat app that lets you use **GPT-3.5, GPT-4o, GPT-5**, and more — with **your own OpenAI API key** and without paying a monthly subscription. Runs entirely in any browser on desktop or iPhone. Saves your key locally and tracks token usage & estimated cost.
+A fully mobile-friendly GPT chat and image generation web app with San Francisco Giants branding.
 
----
+## Features
 
-## 🍊 Features
+- **GPT Models:** GPT-5, GPT-4o, GPT-3.5 selectable
+- **Send & Generate Image:** Two separate buttons for text and AI-generated images
+- **Editable Chat Names:** Rename chats at any time
+- **Persistent Chat History:** Stored in localStorage, accessible via a floating drawer
+- **Floating History Button:** Small orange button on mobile for easy access
+- **Typing Indicator:** Shows when GPT is generating text or images
+- **Export Chat:** Download current chat as a `.txt` file
+- **Token Usage & Cost Tracking:** Displays approximate token usage and cost per chat
+- **Dark Mode:** Toggle for night-friendly theme
+- **Mobile-Friendly Design:** Responsive layout for iPhones, iPads, and desktops
+- **Giants Branding:** Colors, logo, and favicon integrated throughout the interface
 
-- Giants-themed orange/black chat UI
-- API key input (stored locally on your device only)
-- **Model dropdown** (GPT-3.5, GPT-4o-mini, GPT-4o, GPT-5)
-- Dark mode toggle
-- Shows **tokens used + cost** per response
-- Typing indicator while GPT is thinking
-- Clear chat & clear API key buttons
-- Giants favicon/logo in browser tab & iPhone Home Screen
-- Runs entirely in-browser — no backend required
-- Perfect for friends to use with **their own API keys**
+## Installation & Usage
 
----
+1. Clone or download this repository.
+2. Open `index.html` in a modern browser (Chrome, Safari, or Edge).
+3. Enter your OpenAI API key in the provided field.
+4. Select your model from the dropdown menu.
+5. Type your prompt in the text area:
+    - Click **Send** for GPT text response.
+    - Click **Generate Image** for AI-generated images.
+6. Use the floating orange “≡” button to view previous chats.
+7. Rename your current chat using the input field above the chat area.
+8. Export your chat via the **Export Chat** button.
+9. Toggle dark mode with the checkbox.
 
-## ✅ How to Use
+## Mobile Installation
 
-1. Open the site in your browser.
-2. Enter your OpenAI API key.
-3. Pick the model you want (GPT-5 recommended).
-4. Type a message and hit **Send**.
-5. View GPT responses with **token usage & cost**.
-6. Use **Clear Chat** to reset the conversation.
-7. Use **Clear API Key** if you want to remove the stored key.
-8. Optional: Toggle **Dark Mode** for night-time chatting.
+- Add to your home screen for quick access.
+- Favicon will appear as the app icon.
 
----
+## Notes
 
-## 📱 Add to iPhone Home Screen
+- Each user must provide their own OpenAI API key.
+- Tokens and costs are approximate, based on OpenAI pricing.
+- Works best in modern browsers like Chrome, Safari, and Edge.
 
-1. Open the site in Safari.
-2. Tap **Share → Add to Home Screen**.
-3. Name it “Giants GPT”.
-4. The Giants logo will appear as the app icon.
+## License
 
----
-
-## 🛠 Deployment / Hosting
-
-1. Create a GitHub repository (e.g., `giants-gpt-chat`).
-2. Add **`index.html`** (full HTML file) to the root of the repo.
-3. Commit and push.
-4. Go to **Settings → Pages → Source: main branch / root**.
-5. Save. GitHub will provide a URL like:  
+MIT License
